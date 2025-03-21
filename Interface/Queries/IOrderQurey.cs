@@ -1,0 +1,15 @@
+﻿using Dto;
+using Interface.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Interface.Queries
+{
+    public interface IOrderQurey : IQueryModel<OrderModel, Order>
+    {
+        IEnumerable<OrderModel> GetOrdersByUser(int customerid);
+    }
+}

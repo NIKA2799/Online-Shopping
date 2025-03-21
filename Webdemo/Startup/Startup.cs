@@ -1,0 +1,101 @@
+﻿namespace Webdemo.Startup;
+using AutoMapper;
+using Dto;
+using Interface;
+using Interface.Command;
+using Interface.Queries;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Repositories.Repositories;
+using Serilog;
+using Service.CommandService;
+using Service.QueriesService;
+
+public static class Startup
+{
+    public static void ConfigureServices(this IServiceCollection services, IConfiguration configuration)
+    {
+        var logger = new LoggerConfiguration()
+            .ReadFrom.Configuration(new ConfigurationBuilder()
+             .AddJsonFile("seri-log.config.json")
+             .Build())
+            .Enrich.FromLogContext()
+             .CreateLogger();
+        services.AddLogging();
+        services.AddSerilog(logger);
+        services.AddScoped<ICarteService, CartService>();
+        services.AddScoped<ICategoryCommand, CategoryCommand>();
+        services.AddScoped<ICategoryQurey, CategoryQurey>();
+
+        services.AddDbContext<WebDemoDbContext>(options =>
+        options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+        services.AddAutoMapper(typeof(MappingProfile).Assembly);
+        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+        {
+            // Password settings
+            options.Password.RequireNonAlphanumeric = false;  // No special characters required
+            options.Password.RequiredLength = 8;              // Minimum length of 8 characters
+            options.Password.RequireUppercase = false;        // No uppercase letters required
+            options.Password.RequireLowercase = false;        // No lowercase letters required
+
+            // User settings
+            options.User.RequireUniqueEmail = true;           // Ensure email is unique
+
+            // Sign-in settings
+            options.SignIn.RequireConfirmedAccount = false;   // No confirmed account required
+            options.SignIn.RequireConfirmedEmail = false;     // No confirmed email required
+            options.SignIn.RequireConfirmedPhoneNumber = false; // No confirmed phone number required
+        })
+        .AddEntityFrameworkStores<WebDemoDbContext>()    // Use EF Core for Identity
+        .AddDefaultTokenProviders();                         // Add default token providers
+
+        // Add controllers with views (MVC)
+        services.AddControllersWithViews();
+
+        // Add Razor Pages
+        services.AddRazorPages();
+
+        // Add session support (optional)
+        services.AddSession();
+    }
+
+    // This method gets called by the runtime to configure the HTTP request pipeline.
+    public static void Configure(this IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+        }
+        else
+        {
+            app.UseExceptionHandler("/Home/Error");
+            app.UseHsts(); // Enforce HTTP Strict Transport Security
+        }
+
+        app.UseHttpsRedirection(); // Redirect HTTP requests to HTTPS
+        app.UseStaticFiles();      // Serve static files (CSS, JS, images)
+
+        app.UseRouting();          // Enable routing middleware
+
+        app.UseAuthentication();   // Enable authentication middleware
+        app.UseAuthorization();    // Enable authorization middleware
+
+        app.UseSession();          // Enable session state
+
+        app.UseEndpoints(endpoints =>
+        {
+            // Default route for MVC
+            endpoints.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}");
+
+            // Razor Pages route
+            endpoints.MapRazorPages();
+        });
+    }
+}
