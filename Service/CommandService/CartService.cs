@@ -140,7 +140,7 @@ namespace Service.CommandService
         public IEnumerable<CartItemModel> GetCartItems(int cartId)
         {
             var cartItems = _unitOfWork.CartItemRepository.FindByCondition(ci => ci.CartId == cartId).ToList();
-            return _mapper.Map<IEnumerable<CartItemModel>>(cartItems);
+            return _mapper.Map<List<CartItemModel>>(cartItems);
         }
 
         public void deletCart(int cartId)

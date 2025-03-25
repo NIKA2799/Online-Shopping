@@ -33,11 +33,10 @@ namespace Repositories.Repositories
         private readonly Lazy<IProductCategoryRepository> _productCategoryRepository;
         private readonly ILogger<UnitOfWork> _logger;
 
-        public UnitOfWork(WebDemoDbContext context, ILogger<UnitOfWork> logger, IDbContextTransaction transaction)
+        public UnitOfWork(WebDemoDbContext context, ILogger<UnitOfWork> logger)
         {
             _context = context ?? throw new ArgumentException(nameof(context));
             _logger = logger ?? throw new ArgumentException(nameof(logger));
-            _transaction = transaction;
             _cartRepository = new Lazy<ICartRepository>(() => new CartRepository(_context));
             _cartItemRepository = new Lazy<ICartItemRepository>(() => new CartItemRepository(_context));
             _categoryRepository = new Lazy<ICategoryRepository>(() => new CategoryRepository(_context));

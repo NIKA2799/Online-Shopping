@@ -3,6 +3,7 @@ using AutoMapper;
 using Dto;
 using Interface;
 using Interface.Command;
+using Interface.IRepositories;
 using Interface.Queries;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -28,10 +29,10 @@ public static class Startup
              .CreateLogger();
         services.AddLogging();
         services.AddSerilog(logger);
-        services.AddScoped<ICarteService, CartService>();
-        services.AddScoped<ICategoryCommand, CategoryCommand>();
-        services.AddScoped<ICategoryQurey, CategoryQurey>();
 
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<ICarteService, CartService>();
+        services.AddScoped<IOrderCommandService, OrderCommand>();
         services.AddDbContext<WebDemoDbContext>(options =>
         options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
         services.AddAutoMapper(typeof(MappingProfile).Assembly);
