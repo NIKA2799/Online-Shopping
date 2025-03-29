@@ -31,7 +31,7 @@ namespace XUnitTest
             var _logger = NullLogger<UnitOfWork>.Instance;
 
             // Remove transaction handling for in-memory provider
-            UnitOfWork = new UnitOfWork(Context, _logger, transaction: null);
+            UnitOfWork = new UnitOfWork(Context, _logger);
         }
 
         public void Dispose()

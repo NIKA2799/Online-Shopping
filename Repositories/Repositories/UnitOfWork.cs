@@ -27,8 +27,8 @@ namespace Repositories.Repositories
         private readonly Lazy<IShippingRepository> _shippingRepository;
         private readonly Lazy<IWishlistRepositorty> _wishlistRepositorty;
         private readonly Lazy<IWishlistItemRepository> _wishlistItemRepository;
-        private IDbContextTransaction _transaction;
-
+        private IDbContextTransaction transaction;
+       
         private readonly Lazy<ICartRepository> _cartRepository;
         private readonly Lazy<IProductCategoryRepository> _productCategoryRepository;
         private readonly ILogger<UnitOfWork> _logger;
@@ -54,6 +54,9 @@ namespace Repositories.Repositories
             _productCategoryRepository = new Lazy<IProductCategoryRepository>(() => new ProductCategoryRepository(_context));
 
         }
+
+        
+
         public ICartItemRepository CartItemRepository => _cartItemRepository.Value;
         public ICartRepository CartRepository => _cartRepository.Value;
         public ICategoryRepository CategoryRepository => _categoryRepository.Value;
@@ -74,7 +77,7 @@ namespace Repositories.Repositories
         {
             try
             {
-                _transaction = _context.Database.BeginTransaction();
+                transaction = _context.Database.BeginTransaction();
             }
             catch (Exception ex)
             {
@@ -87,8 +90,8 @@ namespace Repositories.Repositories
         {
             try
             {
-                _transaction?.Commit();
-                _transaction?.Dispose();
+                transaction?.Commit();
+                transaction?.Dispose();
             }
             catch (Exception ex)
             {
@@ -99,8 +102,8 @@ namespace Repositories.Repositories
 
         public void Rollback()
         {
-            _transaction?.Rollback();
-            _transaction?.Dispose();
+            transaction?.Rollback();
+            transaction?.Dispose();
         }
 
         public void SaveChanges()
@@ -121,8 +124,8 @@ namespace Repositories.Repositories
         {
             try
             {
-                _transaction?.Rollback();
-                _transaction?.Dispose();
+                transaction?.Rollback();
+                transaction?.Dispose();
             }
             catch (Exception ex)
             {
