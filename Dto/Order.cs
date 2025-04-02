@@ -15,6 +15,6 @@
         public required string ShippingAddress { get; set; }
         public required string BillingAddress { get; set; }
         public required string PaymentMethod { get; set; }
-
+        public int UserId { get; set; }
     }
 }

@@ -18,7 +18,7 @@ namespace Service.CommandService
         public OrderCommand(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
-            _mapper = _mapper;
+            _mapper = mapper;
         }
         public void CancelOrder(int orderId)
         {

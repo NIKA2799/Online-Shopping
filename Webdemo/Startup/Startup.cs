@@ -16,6 +16,7 @@ using Repositories.Repositories;
 using Serilog;
 using Service.CommandService;
 using Service.QueriesService;
+using Webdemo.Exstnsion;
 
 public static class Startup
 {
@@ -80,7 +81,7 @@ public static class Startup
 
         app.UseHttpsRedirection(); // Redirect HTTP requests to HTTPS
         app.UseStaticFiles();      // Serve static files (CSS, JS, images)
-
+        app.UseCustomMiddleware();
         app.UseRouting();          // Enable routing middleware
 
         app.UseAuthentication();   // Enable authentication middleware

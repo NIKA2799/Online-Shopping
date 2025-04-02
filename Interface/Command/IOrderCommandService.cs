@@ -12,5 +12,6 @@ namespace Interface.Command
     {
          void CancelOrder(int orderId);
          void UpdateOrderStatus(int orderId, OrderStatus status);
+         int Checkout(CheckoutModel checkoutModel);
     }
 }

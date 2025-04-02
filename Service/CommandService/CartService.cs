@@ -90,13 +90,57 @@ namespace Service.CommandService
             return true;
         }
 
-        public bool Checkout(string userId, CheckoutModel model)
+        public bool Checkout(int userId, CheckoutModel model)
         {
-            // Implement the checkout logic here.
-            // For example, create an order and move items from the cart to the order.
+            var customer = _unitOfWork.CustomerRepository.FindByCondition(c => c.Id == userId).SingleOrDefault();
+            if (customer == null) return false;
+
+            var cart = _unitOfWork.CartRepository.FindByCondition(c => c.CustomerId == customer.Id).SingleOrDefault();
+            if (cart == null) return false;
+
+            var cartItems = _unitOfWork.CartItemRepository.FindByCondition(ci => ci.CartId == cart.Id).ToList();
+            if (!cartItems.Any()) return false; // No items in cart to checkout
+
+            // Create a new order
+            var order = new Order
+            {
+                UserId = userId,
+                OrderDate = DateTime.UtcNow,
+                Status = OrderStatus.Pending,
+                TotalAmount = cartItems.Sum(ci => ci.Quantity * ci.Product.Price), // Assuming Product has a Price property
+                ShippingAddress = model.ShippingAddress,
+                BillingAddress = model.BillingAddress,
+                PaymentMethod = model.PaymentMethod
+            };
+
+            _unitOfWork.OrderRepository.Insert(order);
+            _unitOfWork.SaveChanges();
+
+            // Move cart items to order details
+            foreach (var item in cartItems)
+            {
+                var orderDetail = new OrderDetail
+                {
+                    OrderId = order.Id,
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.Product.Price
+                };
+
+                _unitOfWork.OrderDetailRepository.Insert(orderDetail);
+            }
+
+            // Clear cart after checkout
+            foreach (var item in cartItems)
+            {
+                _unitOfWork.CartItemRepository.Delete(item);
+            }
+
+            _unitOfWork.SaveChanges();
+
             return true;
         }
-    
+
 
         public void AddToCart(int cartId, CartItemModel cartItem)
         {
@@ -143,7 +187,7 @@ namespace Service.CommandService
             return _mapper.Map<List<CartItemModel>>(cartItems);
         }
 
-        public void deletCart(int cartId)
+        public void DeletCart(int cartId)
         {
             var cartItems = _unitOfWork.CartItemRepository.FindByCondition(ci => ci.CartId == cartId).ToList();
             foreach (var cartItem in cartItems)
@@ -154,5 +198,5 @@ namespace Service.CommandService
         }
     }
 }
-       
+
 
