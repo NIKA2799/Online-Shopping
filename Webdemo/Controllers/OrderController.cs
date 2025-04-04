@@ -3,85 +3,101 @@ using Interface.Command;
 using Interface.Model;
 using Interface.Queries;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Webdemo.Controllers
 {
-        [Route("api/[controller]")]
-        [ApiController]
-        public class OrderController : ControllerBase
+    [Route("api/[controller]")]
+    [ApiController]
+    public class OrderController : ControllerBase
+    {
+        private readonly IOrderCommandService _orderCommandService;
+        private readonly IOrderQurey _orderQueryService;
+
+        public OrderController(IOrderCommandService orderCommandService, IOrderQurey orderQueryService)
         {
-            private readonly IOrderCommandService _orderCommandService;
-            private readonly IOrderQurey _orderQueryService;
+            _orderCommandService = orderCommandService;
+            _orderQueryService = orderQueryService;
+        }
 
-            public OrderController(IOrderCommandService orderCommandService, IOrderQurey orderQueryService)
+        [HttpPost("checkout")]
+        public IActionResult Checkout([FromBody] CheckoutModel checkoutModel)
+        {
+            try
             {
-                _orderCommandService = orderCommandService;
-                _orderQueryService = orderQueryService;
+                var orderId = _orderCommandService.Checkout(checkoutModel);
+                return Ok(new { Message = "Order placed successfully", OrderId = orderId });
             }
-
-            [HttpPost("checkout")]
-            public IActionResult Checkout([FromBody] CheckoutModel checkoutModel)
+            catch (Exception ex)
             {
-                try
-                {
-                    var orderId = _orderCommandService.Checkout(checkoutModel);
-                    return Ok(new { Message = "Order placed successfully", OrderId = orderId });
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(new { Message = ex.Message });
-                }
-            }
-
-            [HttpPost("cancel/{id}")]
-            public IActionResult CancelOrder(int id)
-            {
-                _orderCommandService.CancelOrder(id);
-                return Ok(new { Message = "Order cancelled successfully" });
-            }
-
-            [HttpGet("all")]
-            public IActionResult GetAllOrders()
-            {
-                var orders = _orderQueryService.FindAll();
-                return Ok(orders);
-            }
-
-            [HttpGet("user/{customerId}")]
-            public IActionResult GetOrdersByUser(int customerId)
-            {
-                var orders = _orderQueryService.GetOrdersByUser(customerId);
-                return Ok(orders);
-            }
-
-            [HttpGet("{id}")]
-            public IActionResult GetOrderById(int id)
-            {
-                var order = _orderQueryService.Get(id);
-                if (order == null) return NotFound(new { Message = "Order not found" });
-                return Ok(order);
-            }
-
-            [HttpPut("update/{id}")]
-            public IActionResult UpdateOrder(int id, [FromBody] OrderModel orderModel)
-            {
-                _orderCommandService.Update(id, orderModel);
-                return Ok(new { Message = "Order updated successfully" });
-            }
-
-            [HttpPut("update-status/{orderId}")]
-            public IActionResult UpdateOrderStatus(int orderId, [FromBody] OrderStatus status)
-            {
-                _orderCommandService.UpdateOrderStatus(orderId, status);
-                return Ok(new { Message = "Order status updated successfully" });
-            }
-
-            [HttpDelete("delete/{id}")]
-            public IActionResult DeleteOrder(int id)
-            {
-                _orderCommandService.Delete(id);
-                return Ok(new { Message = "Order deleted successfully" });
+                return BadRequest(new { Message = ex.Message });
             }
         }
-    }
 
+        [HttpPost("cancel/{id}")]
+        public IActionResult CancelOrder(int id)
+        {
+            _orderCommandService.CancelOrder(id);
+            return Ok(new { Message = "Order cancelled successfully" });
+        }
+
+        [HttpGet("all")]
+        public IActionResult GetAllOrders()
+        {
+            var orders = _orderQueryService.FindAll();
+            return Ok(orders);
+        }
+
+        [HttpGet("user/{customerId}")]
+        public IActionResult GetOrdersByUser(int customerId)
+        {
+            var orders = _orderQueryService.GetOrdersByUser(customerId);
+            return Ok(orders);
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult GetOrderById(int id)
+        {
+            var order = _orderQueryService.Get(id);
+            if (order == null) return NotFound(new { Message = "Order not found" });
+            return Ok(order);
+        }
+
+        [HttpPut("update/{id}")]
+        public IActionResult UpdateOrder(int id, [FromBody] OrderModel orderModel)
+        {
+            _orderCommandService.Update(id, orderModel);
+            return Ok(new { Message = "Order updated successfully" });
+        }
+
+        [HttpPut("update-status/{orderId}")]
+        public IActionResult UpdateOrderStatus(int orderId, [FromBody] OrderStatus status)
+        {
+            _orderCommandService.UpdateOrderStatus(orderId, status);
+            return Ok(new { Message = "Order status updated successfully" });
+        }
+
+        [HttpDelete("delete/{id}")]
+        public IActionResult DeleteOrder(int id)
+        {
+            _orderCommandService.Delete(id);
+            return Ok(new { Message = "Order deleted successfully" });
+        }
+        [HttpGet("track/{orderId}")]
+        public IActionResult TrackOrderStatus(int orderId)
+        {
+            // ვიღებთ userId-ს int-ად Claims-იდან
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var userId))
+                return Unauthorized("User is not authenticated.");
+
+            var status = _orderCommandService.TrackOrderStatus(orderId, userId);
+
+            if (status == null)
+                return NotFound("Order not found or you don't have access.");
+
+            return Ok(new { Status = status.ToString() });
+        }
+
+    }
+}

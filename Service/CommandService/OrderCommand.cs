@@ -130,7 +130,17 @@ namespace Service.CommandService
                 // Return the newly created order ID
                 return order.Id;
             }
+        public OrderStatus? TrackOrderStatus(int orderId, int userId)
+        {
+            var order = _unitOfWork.OrderRepository
+                .FindByCondition(o => o.Id == orderId && o.UserId == userId)
+                .SingleOrDefault();
 
+            if (order == null)
+                return null;
+
+            return order.Status;
         }
+    }
     }
 
