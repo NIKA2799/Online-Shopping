@@ -86,7 +86,6 @@ namespace Webdemo.Controllers
         [HttpGet("track/{orderId}")]
         public IActionResult TrackOrderStatus(int orderId)
         {
-            // ვიღებთ userId-ს int-ად Claims-იდან
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var userId))
                 return Unauthorized("User is not authenticated.");

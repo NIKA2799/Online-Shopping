@@ -2,12 +2,6 @@
 using Dto;
 using Interface.Command;
 using Interface.IRepositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Input;
 using Webdemo.Models;
 
 namespace Service.CommandService
@@ -25,7 +19,7 @@ namespace Service.CommandService
         public void Delete(int id)
         {
             var reviw = _unitOfWork.ReviewRepository.FindByCondition(u => u.Id == id).SingleOrDefault();
-            if(reviw != null)
+            if (reviw != null)
             {
                 _unitOfWork.ReviewRepository.Delete(reviw);
                 _unitOfWork.SaveChanges();
@@ -34,17 +28,25 @@ namespace Service.CommandService
 
         public int Insert(ReviewModel entityModel)
         {
-            var reviw = _mapper.Map<Review>(entityModel);
-            _unitOfWork.ReviewRepository.Insert(reviw);
+            var alreadyExists = _unitOfWork.ReviewRepository
+                .FindByCondition(r => r.ProductId == entityModel.ProductId && r.CustomerId == entityModel.CustomerId)
+                .Any();
+
+            if (alreadyExists)
+                throw new InvalidOperationException("ამ პროდუქტზე უკვე გიწერია შეფასება.");
+
+            var review = _mapper.Map<Review>(entityModel);
+            review.DatePosted = DateTime.UtcNow;
+            _unitOfWork.ReviewRepository.Insert(review);
             _unitOfWork.SaveChanges();
-            reviw.Id = entityModel.Id;
-            return reviw.Id;
+            return review.Id;
         }
+
 
         public void Update(int id, ReviewModel entityModel)
         {
             var reviw = _unitOfWork.ReviewRepository.FindByCondition(r => r.Id == id).SingleOrDefault();
-            if(reviw != null)
+            if (reviw != null)
             {
                 var updatereviw = _mapper.Map<Review>(entityModel);
                 updatereviw.Id = reviw.Id;

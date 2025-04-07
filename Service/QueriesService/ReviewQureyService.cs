@@ -12,34 +12,38 @@ using Webdemo.Models;
 
 namespace Service.QueriesService
 {
-    public class ReviewQureyService : IReviewQureyService
+    public class ReviewQueryService : IReviewQureyService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        public ReviewQureyService(IUnitOfWork unitOfWork, IMapper mapper)
+
+        public ReviewQueryService(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
         }
-        public IEnumerable<ReviewModel> FindAll()
+
+        public IEnumerable<ReviewModel> GetReviewsByProduct(int productId)
         {
-            var model = _unitOfWork.ReviewRepository.GetAll();
-            var review = _mapper.Map<List<ReviewModel>>(model);
-            return review;
+            var reviews = _unitOfWork.ReviewRepository.FindByCondition(r => r.ProductId == productId).ToList();
+            return _mapper.Map<List<ReviewModel>>(reviews);
         }
 
+        
+        public ReviewModel GetReviewByUser(int productId, int customerId)
+        {
+            var review = _unitOfWork.ReviewRepository
+                .FindByCondition(r => r.ProductId == productId && r.CustomerId == customerId)
+                .SingleOrDefault();
+
+            return _mapper.Map<ReviewModel>(review);
+        }
+
+       
         public IEnumerable<ReviewModel> FindByCondition(Expression<Func<Review, bool>> predicate)
         {
             var model = _unitOfWork.ReviewRepository.FindByCondition(predicate);
-            var review = _mapper.Map<List<ReviewModel>>(model);
-            return review;
-        }
-
-        public ReviewModel Get(int id)
-        {
-            var model = _unitOfWork.ReviewRepository.FindByCondition(r=> r.Id==id).SingleOrDefault();
-            var review = _mapper.Map<ReviewModel>(model);
-            return review;
+            return _mapper.Map<List<ReviewModel>>(model);
         }
     }
 }
