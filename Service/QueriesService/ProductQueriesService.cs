@@ -1,12 +1,8 @@
 ﻿using AutoMapper;
-using Dto;
 using Interface.IRepositories;
 using Interface.Queries;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
-using System.Text;
 using Webdemo.Models;
 
 
@@ -81,15 +77,38 @@ namespace Service.QueriesService
         {
             var recentProducts = _unitOfWork.ProductRepository.GetAll()
                               .OrderByDescending(p => p.CreateDate)
-
-
                               .Take(10)  // Display the 10 most recent products
-
                               .Take(10).ToList();
 
-                           
-
             return _mapper.Map<IEnumerable<ProductModel>>(recentProducts);
+        }
+        public IEnumerable<ProductModel> GetRelatedProducts(int productId, int take = 4)
+        {
+            var product = _unitOfWork.ProductRepository
+                .FindByCondition(p => p.Id == productId)
+                .Include(p => p.ProductCategories)
+                .ThenInclude(pc => pc.Category)
+                .SingleOrDefault();
+
+            if (product == null)
+                return Enumerable.Empty<ProductModel>();
+
+            var categoryIds = product.ProductCategories.Select(pc => pc.CategoryId).ToList();
+            var minPrice = product.Price * 0.8m;
+            var maxPrice = product.Price * 1.2m;
+
+            var related = _unitOfWork.ProductRepository
+                .FindByCondition(p =>
+                    p.Id != productId &&
+                    p.Price >= minPrice && p.Price <= maxPrice &&
+                    p.ProductCategories.Any(pc => categoryIds.Contains(pc.CategoryId)) &&
+                    p.Stock > 0 && p.IsFeatured)
+                .ToList()
+                .OrderBy(x => Guid.NewGuid()) // Random sort
+                .Take(take)
+                .ToList();
+
+            return _mapper.Map<List<ProductModel>>(related);
         }
 
     }

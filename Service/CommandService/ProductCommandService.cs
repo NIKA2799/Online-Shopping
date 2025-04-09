@@ -2,11 +2,6 @@
 using Dto;
 using Interface.Command;
 using Interface.IRepositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Webdemo.Models;
 
@@ -98,5 +93,26 @@ namespace Service.CommandService
                 _unitOfWork.SaveChanges();
             }
         }
+        public void ToggleAvailability(int productId)
+        {
+            var product = _unitOfWork.ProductRepository.FindByCondition(p => p.Id == productId).SingleOrDefault();
+            if (product != null)
+            {
+                product.IsOutOfStock = !product.IsOutOfStock;
+                _unitOfWork.ProductRepository.Update(product);
+                _unitOfWork.SaveChanges();
+            }
+        }
+        public void ToggleFeatured(int productId)
+        {
+            var product = _unitOfWork.ProductRepository.FindByCondition(p => p.Id == productId).SingleOrDefault();
+            if (product != null)
+            {
+                product.IsFeatured = !product.IsFeatured;
+                _unitOfWork.ProductRepository.Update(product);
+                _unitOfWork.SaveChanges();
+            }
+        }
+
     }
 }

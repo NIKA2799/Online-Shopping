@@ -16,7 +16,7 @@ public class Product : IEntity
     public string ImagePath { get; set; }
     public DateTime CreateDate { get; set; }
     public bool IsFeatured { get; set; }
-    public string IsOutOfStock { get; set; }
+    public bool IsOutOfStock { get; set; }
     public string Items { get; set; }
     
 }

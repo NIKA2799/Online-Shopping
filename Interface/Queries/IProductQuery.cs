@@ -18,6 +18,7 @@ namespace Interface.Queries
         public IEnumerable<ProductModel> GetProducts(int pageNumber, int pageSize);
         public IEnumerable<ProductModel> GetProductsByPriceRange(decimal minPrice, decimal maxPrice);
         public IEnumerable<ProductModel> GetRecentlyAddedProducts();
+        IEnumerable<ProductModel> GetRelatedProducts(int productId, int take = 4);
 
     }
 }

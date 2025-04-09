@@ -1,0 +1,16 @@
+﻿<h4>მსგავსი პროდუქტები</h4>
+<div class="row">
+    @foreach (var product in Model.RelatedProducts)
+    {
+        <div class="col-md-3">
+            <div class="card mb-4 shadow-sm">
+                <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name">
+                <div class="card-body">
+                    <h5 class="card-title">@product.Name</h5>
+                    <p class="card-text">@product.Price ₾</p>
+                    <a href="/Product/Details/@product.Id" class="btn btn-primary btn-sm">დეტალურად</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
