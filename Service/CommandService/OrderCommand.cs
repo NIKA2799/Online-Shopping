@@ -3,11 +3,7 @@ using Dto;
 using Interface.Command;
 using Interface.IRepositories;
 using Interface.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Service.CommandService
 {
@@ -45,7 +41,7 @@ namespace Service.CommandService
         public void Update(int id, OrderModel entityModel)
         {
             var order = _unitOfWork.OrderRepository.FindByCondition(o => o.Id == id).SingleOrDefault();
-            if(order != null)
+            if (order != null)
             {
                 order = _mapper.Map<Order>(entityModel);
                 _unitOfWork.OrderRepository.Update(order);
@@ -63,73 +59,62 @@ namespace Service.CommandService
                 _unitOfWork.SaveChanges();
             }
         }
-            public int Checkout(CheckoutModel checkoutModel)
+        public int Checkout(CheckoutModel model)
+        {
+            // 1. Load cart + items
+            var cart = _unitOfWork.CartRepository
+                           .FindByCondition(c => c.CustomerId == model.Customerid)
+                           .Include(c => c.Items)
+                           .ThenInclude(i => i.Product)
+                           .SingleOrDefault();
+            if (cart?.Items == null || !cart.Items.Any())
+                throw new InvalidOperationException("Cart is empty or does not exist.");
+
+            // 2. Validate stock and compute total
+            decimal total = 0;
+            foreach (var item in cart.Items)
             {
-                // 1. Retrieve the user's cart and items
-                var cart = _unitOfWork.CartRepository.FindByCondition(c => c.CustomerId == checkoutModel.Customerid).SingleOrDefault();
-                if (cart == null || !cart.Items.Any())
-                {
-                    throw new InvalidOperationException("Cart is empty or does not exist.");
-                }
-
-                // 2. Validate stock and calculate total amount
-                decimal totalAmount = 0;
-                foreach (var cartItem in cart.Items)
-                {
-                    var product = _unitOfWork.ProductRepository.FindByCondition(p => p.Id == cartItem.ProductId).SingleOrDefault();
-                    if (product == null || product.Stock < cartItem.Quantity)
-                    {
-                        throw new InvalidOperationException($"Insufficient stock for product: {product?.Name ?? "Unknown"}");
-                    }
-
-                    totalAmount += cartItem.Quantity * product.Price;
-                }
-
-                // 3. Create the Order
-                var order = new Order
-                {
-                    CustomerId = checkoutModel.Customerid,
-                    OrderDate = DateTime.UtcNow,
-                    TotalAmount = totalAmount,
-                    Status = OrderStatus.Pending,
-                    ShippingAddress = checkoutModel.ShippingAddress,
-                    BillingAddress = checkoutModel.BillingAddress,
-                    PaymentMethod = checkoutModel.PaymentMethod
-                };
-                _unitOfWork.OrderRepository.Insert(order);
-                _unitOfWork.SaveChanges();
-
-                // 4. Create Order Details and update product stock
-                foreach (var cartItem in cart.Items)
-                {
-                    var orderDetail = new OrderDetail
-                    {
-                        OrderId = order.Id,
-                        ProductId = cartItem.ProductId,
-                        Quantity = cartItem.Quantity,
-                        UnitPrice = cartItem.Product.Price
-                    };
-                    _unitOfWork.OrderDetailRepository.Insert(orderDetail);
-
-                    // Update product stock
-                    var product = _unitOfWork.ProductRepository.FindByCondition(p => p.Id == cartItem.ProductId).SingleOrDefault();
-                    if (product != null)
-                    {
-                        product.Stock -= cartItem.Quantity;
-                        _unitOfWork.ProductRepository.Update(product);
-                    }
-                }
-
-                // 5. Clear the cart
-                foreach (var cartItem in cart.Items.ToList())
-                {
-                    _unitOfWork.CartItemRepository.Delete(cartItem);
-                }
-                _unitOfWork.SaveChanges();
-
-                // Return the newly created order ID
-                return order.Id;
+                if (item.Product.Stock < item.Quantity)
+                    throw new InvalidOperationException($"Insufficient stock for {item.Product.Name}.");
+                total += item.Quantity * item.Product.Price;
             }
+
+            // 3. Build order + details
+            var order = new Order
+            {
+                CustomerId = model.Customerid,
+                OrderDate = DateTime.UtcNow,
+                TotalAmount = total,
+                Status = OrderStatus.Pending,
+                ShippingAddress = model.ShippingAddress,
+                BillingAddress = model.BillingAddress,
+                PaymentMethod = model.PaymentMethod
+            };
+            _unitOfWork.OrderRepository.Insert(order);
+
+            foreach (var item in cart.Items)
+            {
+                var detail = new OrderDetail
+                {
+                    Order = order,
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.Product.Price
+                };
+                _unitOfWork.OrderDetailRepository.Insert(detail);
+
+                // adjust stock
+                item.Product.Stock -= item.Quantity;
+                _unitOfWork.ProductRepository.Update(item.Product);
+            }
+
+            // 4. Clear cart
+            _unitOfWork.CartItemRepository.DeleteRange(cart.Items);
+
+            // 5. Commit once
+            _unitOfWork.SaveChanges();
+            return order.Id;
+        }
         public OrderStatus? TrackOrderStatus(int orderId, int userId)
         {
             var order = _unitOfWork.OrderRepository
@@ -142,5 +127,5 @@ namespace Service.CommandService
             return order.Status;
         }
     }
-    }
+}
 
