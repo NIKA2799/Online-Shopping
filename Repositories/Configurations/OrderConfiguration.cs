@@ -13,42 +13,49 @@ namespace Repositories.Configurations
     {
         public void Configure(EntityTypeBuilder<Order> entity)
         {
-            // Configure the primary key
             entity.HasKey(o => o.Id);
 
-            // Configure the foreign key relationship with Customer
+            // Customer (1) -> (Many) Orders
             entity.HasOne(o => o.Customer)
-                  .WithMany(c => c.Orders) // Assuming Customer has a collection of Orders
+                  .WithMany(c => c.Orders)
                   .HasForeignKey(o => o.CustomerId)
-                  .OnDelete(DeleteBehavior.Cascade); // Optional: Cascade delete when Customer is deleted
+                  .OnDelete(DeleteBehavior.Cascade);
 
-            // Configure properties
-            entity.Property(o => o.OrderDate)
-                  .IsRequired(); // Ensure OrderDate is required
-
-            entity.Property(o => o.TotalAmount)
-                  .IsRequired() // Ensure TotalAmount is required
-                  .HasColumnType("decimal(18,2)"); // Optional: Specify decimal precision and scale
-
-            // Configure relationship with OrderDetails
+            // OrderDetails (1) -> (Many) OrderDetail
             entity.HasMany(o => o.OrderDetails)
-                  .WithOne(od => od.Order) // Assuming OrderDetail has a navigation property to Order
-                  .HasForeignKey(od => od.OrderId) // Assuming OrderDetail has OrderId property
-                  .OnDelete(DeleteBehavior.Cascade); // Optional: Cascade delete when Order is deleted
+                  .WithOne(od => od.Order)
+                  .HasForeignKey(od => od.OrderId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
+            // ShippingAddress Required
             entity.Property(o => o.ShippingAddress)
-              .HasMaxLength(255)
-              .IsRequired(false);  // Optional
+                  .IsRequired()
+                  .HasMaxLength(300);
 
-            // Configure the BillingAddress property
+            // BillingAddress Required
             entity.Property(o => o.BillingAddress)
-                   .HasMaxLength(255)
-                   .IsRequired(false);  // Optional
+                  .IsRequired()
+                  .HasMaxLength(300);
 
-            // Configure the PaymentMethod property
+            // PaymentMethod Required
             entity.Property(o => o.PaymentMethod)
-                   .HasMaxLength(50)
-                   .IsRequired(false);  // Optiona
+                  .IsRequired()
+                  .HasMaxLength(100);
+
+            // TotalAmount precision (optional recommendation)
+            entity.Property(o => o.TotalAmount)
+                  .HasColumnType("decimal(18,2)");
+
+            // Status Enum
+            entity.Property(o => o.Status)
+                  .HasConversion<int>();
+
+            // OrderDate Default Value
+            entity.Property(o => o.OrderDate)
+                  .HasDefaultValueSql("GETUTCDATE()");
+
+            // Optional: Table name
+            entity.ToTable("Orders");
         }
     }
 }

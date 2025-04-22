@@ -1,5 +1,4 @@
 using Dto;
-using System.Collections;
 public class Product : IEntity
 
 {
@@ -18,7 +17,7 @@ public class Product : IEntity
     public bool IsFeatured { get; set; }
     public bool IsOutOfStock { get; set; }
     public string Items { get; set; }
-    
+
 }
 
 

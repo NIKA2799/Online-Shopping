@@ -6,23 +6,18 @@ using System.Threading.Tasks;
 
 namespace Dto
 {
+    /// <summary>
+    /// Represents an entity with a primary key.
+    /// </summary>
     public interface IEntity<out T>
     {
         T Id { get; }
     }
 
+    /// <summary>
+    /// Represents an entity with an int primary key.
+    /// </summary>
     public interface IEntity : IEntity<int>
     {
-
-    }
-
-    public interface IEntityModel<out T>
-    {
-        T Id { get; }
-    }
-
-    public interface IEntityModel : IEntityModel<int>
-    {
-
     }
 }

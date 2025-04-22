@@ -1,11 +1,6 @@
 ﻿using Dto;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Repositories.Configurations
 {
@@ -13,20 +8,29 @@ namespace Repositories.Configurations
     {
         public void Configure(EntityTypeBuilder<CartItem> entity)
         {
-            // Configure the primary key
+            // Primary Key
             entity.HasKey(ci => ci.Id);
 
-            // Configure the Cart relationship (Many-to-One)
+            // Cart (1) -> (Many) CartItems
             entity.HasOne(ci => ci.Cart)
-                  .WithMany(c => c.Items) // Assuming Cart has a collection of CartItems
+                  .WithMany(c => c.Items)
                   .HasForeignKey(ci => ci.CartId)
-                  .OnDelete(DeleteBehavior.Cascade); // Cascade delete when Cart is deleted
+                  .OnDelete(DeleteBehavior.Cascade);
 
+            // Product (1) -> (Many) CartItems
+            entity.HasOne(ci => ci.Product)
+                  .WithMany()
+                  .HasForeignKey(ci => ci.ProductId)
+                  .OnDelete(DeleteBehavior.Restrict);
 
-            // Configure Quantity as a required field with a default value
-            entity.Property(ci => ci.Quantity)
-                  .IsRequired()
-                  .HasDefaultValue(1); // Default value of 1 for quantity
+            // Optional: MaxLength constraint for Items (if you keep it)
+            if (typeof(CartItem).GetProperty("Items") != null)
+            {
+                entity.Property(ci => ci.Items)
+                      .HasMaxLength(200); // Example: Limit text length
+            }
+
+            entity.ToTable("CartItems");
         }
     }
 }

@@ -9,24 +9,30 @@ namespace Repositories.Configurations
     {
         public void Configure(EntityTypeBuilder<Category> entity)
         {
-            // Configure the primary key
             entity.HasKey(c => c.Id);
 
-            // Configure the Name property to be required with a maximum length
+            // Name is required and has a maximum length
             entity.Property(c => c.Name)
                   .IsRequired()
-                  .HasMaxLength(100); // Optional: max length of the category name
+                  .HasMaxLength(100); 
+
+            // Description is required and has a maximum length
             entity.Property(c => c.Description)
                   .IsRequired()
-                  .HasMaxLength(100);
-            entity.Property(c => c.CreateDate)
-                .IsRequired();
+                  .HasMaxLength(500); 
 
-            // Configure the many-to-many relationship via ProductCategory
+            // CreateDate - default value current time
+            entity.Property(c => c.CreateDate)
+                  .HasDefaultValueSql("GETUTCDATE()");
+
+            // Relationship with ProductCategories
             entity.HasMany(c => c.ProductCategories)
                   .WithOne(pc => pc.Category)
                   .HasForeignKey(pc => pc.CategoryId)
-                  .OnDelete(DeleteBehavior.Cascade); // Cascade delete when Category is deleted
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Optional: Table name (if you want)
+            entity.ToTable("Categories");
         }
     }
 }

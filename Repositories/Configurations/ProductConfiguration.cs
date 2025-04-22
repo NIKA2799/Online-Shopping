@@ -1,11 +1,5 @@
-﻿using Dto;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Repositories.Configurations
 {
@@ -13,55 +7,66 @@ namespace Repositories.Configurations
     {
         public void Configure(EntityTypeBuilder<Product> entity)
         {
-            // Configure the primary key
+
+            // Primary Key
             entity.HasKey(p => p.Id);
 
-            // Configure properties
+            // Name
             entity.Property(p => p.Name)
                   .IsRequired()
-                  .HasMaxLength(100); // Set maximum length for the product name
+                  .HasMaxLength(200);
 
+            // Description
             entity.Property(p => p.Description)
                   .IsRequired()
-                  .HasMaxLength(500); // Set maximum length for the description
+                  .HasMaxLength(1000);
 
+            // Price
             entity.Property(p => p.Price)
-                  .IsRequired()
-                  .HasColumnType("decimal(18,2)"); // Specify decimal precision and scale
+                  .HasColumnType("decimal(18,2)")
+                  .IsRequired();
 
+            // Stock
             entity.Property(p => p.Stock)
-                  .IsRequired(); // Ensure Stock is required
+                  .IsRequired();
 
-
+            // ImageUrl
             entity.Property(p => p.ImageUrl)
-                  .IsRequired(); // Ensure ImageUrl is required
+                  .IsRequired()
+                  .HasMaxLength(300);
 
-            entity.Property(p => p.ImageUrl)
-                  .IsRequired(); // Ensure ImageUrl is required
-
-            // Map the 'CreateDate' property with default value set to the current time
-            entity.Property(p => p.CreateDate)
-                   .HasDefaultValueSql("GETDATE()")  // SQL Server default current date
-                   .IsRequired();
-
-            // Map the 'IsFeatured' property
-            entity.Property(p => p.IsFeatured)
-                   .IsRequired();
-
-            // Since 'ImageFile' is not stored, we map the 'ImagePath' instead
+            // ImagePath
             entity.Property(p => p.ImagePath)
-                   .HasMaxLength(255)
-                   .IsRequired(false);  // I
+                  .HasMaxLength(300);
 
+            // ImageFile (ignored - not mapped to database)
+            entity.Ignore(p => p.ImageFile);
 
+            // CreateDate
+            entity.Property(p => p.CreateDate)
+                  .HasDefaultValueSql("GETUTCDATE()");
 
-        
-            entity.HasMany(p => p.ProductCategories)
-                  .WithOne(pc => pc.Product) // Assuming ProductCategory has a navigation property to Product
-                  .HasForeignKey(pc => pc.ProductId) // Foreign key on ProductCategory
-                  .OnDelete(DeleteBehavior.Cascade); // Optional: Cascade delete when Product is deleted
+            // IsFeatured
+            entity.Property(p => p.IsFeatured)
+                  .HasDefaultValue(false);
+
+            // IsOutOfStock
             entity.Property(p => p.IsOutOfStock)
-                 .IsRequired();
+                  .HasDefaultValue(false);
+
+            // Items (optional field)
+            entity.Property(p => p.Items)
+                  .HasMaxLength(500);
+
+            // Relationship with ProductCategories
+            entity.HasMany(p => p.ProductCategories)
+                  .WithOne(pc => pc.Product)
+                  .HasForeignKey(pc => pc.ProductId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Table Name (optional)
+            entity.ToTable("Products");
+
         }
     }
 }

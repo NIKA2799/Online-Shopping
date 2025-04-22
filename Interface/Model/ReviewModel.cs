@@ -1,5 +1,6 @@
 
 using Dto;
+using Interface.Model;
 
 namespace Webdemo.Models
 {

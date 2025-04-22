@@ -13,39 +13,55 @@ namespace Repositories.Configurations
     {
         public void Configure(EntityTypeBuilder<Customer> entity)
         {
-            // Configure the primary key
+
+            // Primary Key
             entity.HasKey(c => c.Id);
 
-            // Configure required properties
+            // Name is required and max length
             entity.Property(c => c.Name)
                   .IsRequired()
-                  .HasMaxLength(100); // Optional: Set a maximum length
+                  .HasMaxLength(100);
 
+            // Email optional but has a max length
             entity.Property(c => c.Email)
-                  .HasMaxLength(255); // Optional: Set a maximum length
+                  .HasMaxLength(150);
 
+            // PhoneNumber optional but has a max length
             entity.Property(c => c.PhoneNumber)
-                  .HasMaxLength(15); // Optional: Set a maximum length
+                  .HasMaxLength(20);
 
+            // ShippingAddress optional
             entity.Property(c => c.ShippingAddress)
-                  .HasMaxLength(255); // Optional: Set a maximum length
+                  .HasMaxLength(300);
 
+            // BillingAddress optional
             entity.Property(c => c.BillingAddress)
-                  .HasMaxLength(255); // Optional: Set a maximum length
+                  .HasMaxLength(300);
 
+            // DateCreated default value (optional)
             entity.Property(c => c.DateCreated)
-                  .HasDefaultValueSql("GETDATE()"); // Optional: Default value
+                  .HasDefaultValueSql("GETUTCDATE()");
 
-            // Configure relationships with Orders and Carts if needed
+            // 1 Customer -> Many Orders
             entity.HasMany(c => c.Orders)
-                  .WithOne() // Assuming Order has a navigation property to Customer
-                  .HasForeignKey(o => o.CustomerId) // Assuming Order has CustomerId property
-                  .OnDelete(DeleteBehavior.Cascade); // Cascade delete
+                  .WithOne(o => o.Customer)
+                  .HasForeignKey(o => o.CustomerId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
+            // 1 Customer -> Many Carts
             entity.HasMany(c => c.Carts)
-                  .WithOne() // Assuming Cart has a navigation property to Customer
-                  .HasForeignKey(c => c.CustomerId) // Assuming Cart has CustomerId property
-                  .OnDelete(DeleteBehavior.Cascade); // Cascade delete
+                  .WithOne(ca => ca.Customer)
+                  .HasForeignKey(ca => ca.CustomerId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // 1 Customer -> Many Wishlists
+            entity.HasMany(c => c.Wishlists)
+                  .WithOne(w => w.Customer)
+                  .HasForeignKey(w => w.CustomerId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Optional: Specify table name
+            entity.ToTable("Customers");
         }
     }
 }

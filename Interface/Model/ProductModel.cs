@@ -1,4 +1,5 @@
 ﻿using Dto;
+using Interface.Model;
 using Microsoft.AspNetCore.Http;
 
 namespace Webdemo.Models

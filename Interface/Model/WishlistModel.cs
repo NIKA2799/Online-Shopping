@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Interface.Model
 {
-   public class WishlistModel
+   public class WishlistModel: IEntityModel
     {
         public int Id { get; set; }
         public int CustomerId { get; set; }

@@ -16,26 +16,32 @@ namespace Repositories.Configurations
             // Configure the primary key
             entity.HasKey(r => r.Id);
 
-            // Configure foreign key relationships
-            entity.HasOne(r => r.Product)
-                  .WithMany() // Assuming Product does not need to track Reviews directly
-                  .HasForeignKey(r => r.ProductId)
-                  .OnDelete(DeleteBehavior.Cascade); // Optional: Cascade delete when Product is deleted
-
-            entity.HasOne(r => r.Customer)
-                  .WithMany() // Assuming Customer does not need to track Reviews directly
-                  .HasForeignKey(r => r.CustomerId)
-                  .OnDelete(DeleteBehavior.Cascade); // Optional: Cascade delete when Customer is deleted
-
-            // Configure properties
+            // Rating (1-5)
             entity.Property(r => r.Rating)
-                  .IsRequired(); // Ensure Rating is required
+                  .IsRequired();
 
+            // Comment (optional)
             entity.Property(r => r.Comment)
-                  .HasMaxLength(500); // Optional: Set a maximum length for the comment
+                  .HasMaxLength(1000);
 
+            // DatePosted (optional default)
             entity.Property(r => r.DatePosted)
-                  .IsRequired(); // Ensure DatePosted is required
+                  .HasDefaultValueSql("GETUTCDATE()");
+
+            // Product (1 Product → Many Reviews)
+            entity.HasOne(r => r.Product)
+                  .WithMany()
+                  .HasForeignKey(r => r.ProductId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Customer (1 Customer → Many Reviews)
+            entity.HasOne(r => r.Customer)
+                  .WithMany()
+                  .HasForeignKey(r => r.CustomerId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Optional Table Name
+            entity.ToTable("Reviews");
         }
     }
 }

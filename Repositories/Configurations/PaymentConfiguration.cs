@@ -16,21 +16,26 @@ namespace Repositories.Configurations
             // Configure the primary key
             entity.HasKey(p => p.Id);
 
-            // Configure the foreign key relationship with Order
+            // Payment → Order (Many-to-One)
             entity.HasOne(p => p.Order)
-                  .WithMany() // Assuming Order does not need to track Payments directly
+                  .WithMany()
                   .HasForeignKey(p => p.OrderId)
-                  .OnDelete(DeleteBehavior.Cascade); // Optional: Cascade delete when Order is deleted
+                  .OnDelete(DeleteBehavior.Cascade);
 
-            // Configure properties
+            // PaymentMethod (optional) - MaxLength
             entity.Property(p => p.PaymentMethod)
-                  .HasMaxLength(50); // Optional: Set a maximum length for the payment method
+                  .HasMaxLength(100);
 
+            // IsPaid - Required
             entity.Property(p => p.IsPaid)
-                  .IsRequired(); // Ensure IsPaid is required
+                  .IsRequired();
 
+            // PaymentDate - Default Value UTC Now (optional)
             entity.Property(p => p.PaymentDate)
-                  .IsRequired(); // Ensure PaymentDate is required
+                  .HasDefaultValueSql("GETUTCDATE()");
+
+            // Optional: Table name
+            entity.ToTable("Payments");
         }
     }
 }
