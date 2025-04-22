@@ -43,8 +43,9 @@ namespace Service.CommandService
             var order = _unitOfWork.OrderRepository.FindByCondition(o => o.Id == id).SingleOrDefault();
             if (order != null)
             {
-                order = _mapper.Map<Order>(entityModel);
-                _unitOfWork.OrderRepository.Update(order);
+                var updateorder = _mapper.Map<Order>(entityModel);
+                updateorder.Id =order.Id;
+                _unitOfWork.OrderRepository.Update(updateorder);
                 _unitOfWork.SaveChanges();
             }
         }

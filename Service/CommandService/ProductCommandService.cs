@@ -60,8 +60,9 @@ namespace Service.CommandService
             var existingProduct = _unitOfWork.ProductRepository.FindByCondition(p => p.Id == id).SingleOrDefault();
             if (existingProduct != null)
             {
-                _mapper.Map(entityModel, existingProduct);
-                _unitOfWork.ProductRepository.Update(existingProduct);
+                var updateproduct = _mapper.Map<Product>(entityModel);
+                updateproduct.Id = existingProduct.Id;
+                _unitOfWork.ProductRepository.Update(updateproduct);
                 _unitOfWork.SaveChanges();
             }
         }

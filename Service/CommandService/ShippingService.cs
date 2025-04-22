@@ -51,8 +51,8 @@ namespace Service.CommandService
             var existingShipping = _unitOfWork.ShippingRepository.FindByCondition(s => s.Id == shippingModel.Id).SingleOrDefault();
             if (existingShipping == null) return false;
 
-            _mapper.Map(shippingModel, existingShipping);
-            _unitOfWork.ShippingRepository.Update(existingShipping);
+            var updateshipping = _mapper.Map<Shipping>(shippingModel);
+            updateshipping.Id = existingShipping.Id;
             _unitOfWork.SaveChanges();
             return true;
         }
