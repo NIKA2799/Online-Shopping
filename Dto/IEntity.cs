@@ -14,10 +14,18 @@ namespace Dto
         T Id { get; }
     }
 
-    /// <summary>
-    /// Represents an entity with an int primary key.
-    /// </summary>
     public interface IEntity : IEntity<int>
     {
+
+    }
+
+    public interface IEntityModel<out T>
+    {
+        T Id { get; }
+    }
+
+    public interface IEntityModel : IEntityModel<int>
+    {
+
     }
 }

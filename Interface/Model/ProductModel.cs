@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Webdemo.Models
 {
-    public class ProductModel: IEntityModel
+    public class ProductModel:  IEntityModel
     {
         public required int Id { get; set; }
         public required string Name { get; set; }

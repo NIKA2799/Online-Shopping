@@ -18,9 +18,27 @@ namespace Service.CommandService
         }
         public void CancelOrder(int orderId)
         {
-            throw new NotImplementedException();
-        }
+            var order = _unitOfWork.OrderRepository.FindByCondition(o => o.Id == orderId).SingleOrDefault();
+            if (order != null && order.Status != OrderStatus.Cancelled)
+            {
+                order.Status = OrderStatus.Cancelled;
+                _unitOfWork.OrderRepository.Update(order);
 
+               
+                foreach (var detail in _unitOfWork.OrderDetailRepository.FindByCondition(d => d.OrderId == orderId))
+                {
+                    var product = _unitOfWork.ProductRepository.GetById(detail.ProductId);
+                    if (product != null)
+                    {
+                        product.Stock += detail.Quantity;
+                        product.IsOutOfStock = product.Stock <= 0;
+                        _unitOfWork.ProductRepository.Update(product);
+                    }
+                }
+
+                _unitOfWork.SaveChanges();
+            }
+        }
         public void Delete(int id)
         {
             throw new NotImplementedException();

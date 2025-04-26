@@ -114,6 +114,10 @@ namespace Service.CommandService
                 _unitOfWork.SaveChanges();
             }
         }
-
+        public IEnumerable<ProductModel> GetLowStockProducts(int threshold = 5)
+        {
+            var lowStock = _unitOfWork.ProductRepository.FindByCondition(p => p.Stock <= threshold);
+            return _mapper.Map<List<ProductModel>>(lowStock);
+        }
     }
 }
