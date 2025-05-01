@@ -8,14 +8,17 @@ using Interface.Queries;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Repositories.Repositories;
 using Serilog;
 using Service.CommandService;
 using Service.QueriesService;
+using System.Globalization;
 using Webdemo.Exstnsion;
 
 public static class Startup
@@ -64,6 +67,20 @@ public static class Startup
 
         // Add session support (optional)
         services.AddSession();
+        services.AddLocalization(options => options.ResourcesPath = "Resources");
+        var supportedCultures = new[] { new CultureInfo("en-US"), new CultureInfo("ka-GE") };
+        // ✅ Configure RequestLocalization
+        services.Configure<RequestLocalizationOptions>(options =>
+        {
+            options.DefaultRequestCulture = new RequestCulture("ka-GE");
+            options.SupportedCultures = supportedCultures;
+            options.SupportedUICultures = supportedCultures;
+            options.RequestCultureProviders.Insert(0, new QueryStringRequestCultureProvider());
+            options.RequestCultureProviders.Insert(1, new CookieRequestCultureProvider());
+
+        });
+
+
     }
 
     // This method gets called by the runtime to configure the HTTP request pipeline.
@@ -78,6 +95,8 @@ public static class Startup
             app.UseExceptionHandler("/Home/Error");
             app.UseHsts(); // Enforce HTTP Strict Transport Security
         }
+        var locOptions = app.ApplicationServices.GetRequiredService<IOptions<RequestLocalizationOptions>>();
+        app.UseRequestLocalization(locOptions.Value);
 
         app.UseHttpsRedirection(); // Redirect HTTP requests to HTTPS
         app.UseStaticFiles();      // Serve static files (CSS, JS, images)
