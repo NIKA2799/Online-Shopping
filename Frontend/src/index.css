@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* keep the root height so the fixed bars layout works */
+html,
+body,
+#root {
+  height: 100%;
+}
