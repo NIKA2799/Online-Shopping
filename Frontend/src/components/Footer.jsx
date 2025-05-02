@@ -7,7 +7,7 @@ const linkClass = ({ isActive }) =>
 
 export default function Footer() {
   return (
-    <footer className="fixed inset-x-0 bottom-0 z-50 h-14 bg-blue-100 shadow-inner flex justify-around">
+    <footer className="fixed inset-x-0 bottom-0 z-50 h-14 bg-gray-100 shadow-inner flex justify-around">
       <NavLink to="/" end className={linkClass}>
         <i className="pi pi-home text-lg" />
         <span className="text-xs">Home</span>
