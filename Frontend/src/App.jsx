@@ -9,10 +9,12 @@ import Contact from "@/pages/Contact";
 
 export default function App() {
   return (
-    <>
+    /* Root flex‑column wrapper that always fills the viewport */
+    <div className="flex min-h-screen flex-col">
       <Header />
 
-      <main className="pt-14 pb-14 min-h-full overflow-y-auto">
+      {/* Top padding = header height, bottom padding = footer height */}
+      <main className="flex-1 overflow-y-auto pt-14 pb-14">
         <Routes>
           <Route element={<Outlet />}>
             <Route path="/" element={<Home />} />
@@ -25,6 +27,6 @@ export default function App() {
       </main>
 
       <Footer />
-    </>
+    </div>
   );
 }

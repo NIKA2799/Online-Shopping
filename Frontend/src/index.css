@@ -1,8 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* src/index.css */
 
-/* keep the root height so the fixed bars layout works */
+@import "tailwindcss";
+
+/* optional global tweaks */
 html,
 body,
 #root {
