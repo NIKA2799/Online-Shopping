@@ -1,4 +1,5 @@
-// postcss.config.js  (or postcss.config.mjs if you stay ESM)
 export default {
-  plugins: ["@tailwindcss/postcss"],
+  plugins: {
+    "@tailwindcss/postcss": {}, // key = package name
+  },
 };

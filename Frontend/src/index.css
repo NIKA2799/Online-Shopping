@@ -1,10 +1,1 @@
-/* src/index.css */
-
-@import "tailwindcss";
-
-/* optional global tweaks */
-html,
-body,
-#root {
-  height: 100%;
-}
+@import "tailwindcss"; /* v4 shorthand */
