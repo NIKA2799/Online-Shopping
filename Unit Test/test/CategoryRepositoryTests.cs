@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Unit_test;
 using XUnitTest;
 
-namespace Unit_Test
+namespace Unit_Test.test
 {
     public class CategoryRepositoryTests : IClassFixture<UnitOfWorkFixture>
     {
