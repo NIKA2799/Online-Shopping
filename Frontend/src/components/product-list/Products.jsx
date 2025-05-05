@@ -1,44 +1,58 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import Product from "@/components/product/Product";
+const fetchProducts = async () => {
+  const { data } = await axios.get("https://dummyjson.com/products");
+  const products = Array.isArray(data) ? data : data.products ?? [];
+
+  console.log("[API] fetched products", products); // ← one log per fetch
+  return products;
+};
 
 export default function Products() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  /* ---------------------------------------------------------------
+   * React Query v5 — object signature
+   * --------------------------------------------------------------- */
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["products", "all"],
+    queryFn: fetchProducts,
+    staleTime: 5 * 60 * 1000, // 5‑minute freshness
+    cacheTime: 30 * 60 * 1000, // 30‑minute cache
+    keepPreviousData: true,
+    refetchOnWindowFocus: false,
+  });
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const { data } = await axios.get("https://dummyjson.com/products"); // swap to your real endpoint when ready
-        // The API returns { products: [...] }. Grab the array safely.
-        setProducts(Array.isArray(data) ? data : data.products ?? []);
-        console.log(data);
-      } catch (err) {
-        console.error(err);
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  /* ---------------------------------------------------------------
+   * Render states
+   * --------------------------------------------------------------- */
+  if (isLoading) {
+    return <section className="p-4">Loading products…</section>;
+  }
 
-    fetchProducts();
-  }, []);
-
-  if (loading) return <section className="p-4">Loading products…</section>;
-  if (error)
+  if (isError) {
     return (
-      <section className="p-4 text-red-600">Error loading products.</section>
+      <section className="p-4 text-red-600">
+        Error loading products: {error.message}
+      </section>
     );
+  }
 
+  /* ---------------------------------------------------------------
+   * Product grid
+   * --------------------------------------------------------------- */
   return (
     <section className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 p-4">
       {products.length === 0 ? (
         <p>No products found.</p>
       ) : (
         products
-          .filter((p) => p?.id ?? p?._id) // ⬅ only render items with an id
-          .map((p) => <Product key={p.id ?? p._id} product={p} />)
+          .filter((p) => p?.id ?? p?._id) // skip items without an id
+          .map((p) => <Product key={p.id ?? p._id ?? p.name} product={p} />)
       )}
     </section>
   );
