@@ -39,7 +39,7 @@ export default function CategoriesBar({ selected, onSelect }) {
   if (isError)
     return <div className="p-4 text-red-600">Couldn’t load categories.</div>;
 
-  /* prepend the “all” pseudo‑category */
+  /* prepend the “all” pseudo‑categorys */
   const all = [{ slug: "all", name: "All products" }, ...categories];
 
   return (
