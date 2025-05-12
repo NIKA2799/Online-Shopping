@@ -58,6 +58,14 @@ public static class Startup
         })
         .AddEntityFrameworkStores<WebDemoDbContext>()    // Use EF Core for Identity
         .AddDefaultTokenProviders();                         // Add default token providers
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll",
+                builder =>
+                {
+                    builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+                });
+        });
 
         // Add controllers with views (MVC)
         services.AddControllersWithViews();
