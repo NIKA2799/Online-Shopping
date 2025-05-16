@@ -37,8 +37,10 @@ public static class Startup
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICarteService, CartService>();
         services.AddScoped<IOrderCommandService, OrderCommand>();
+
+        // Replace the problematic line with the following:
         services.AddDbContext<WebDemoDbContext>(options =>
-        options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+           options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
         services.AddAutoMapper(typeof(MappingProfile).Assembly);
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         {
