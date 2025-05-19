@@ -1,11 +1,12 @@
 ﻿using AutoMapper;
 using Dto;
+using Interface.Command;
 using Interface.IRepositories;
 using Interface.Model;
 
 namespace Service.CommandService
 {
-    public class WhishlistService
+    public class WhishlistService : IWhishlistService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
