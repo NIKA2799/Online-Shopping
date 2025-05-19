@@ -1,10 +1,6 @@
 ﻿namespace Webdemo.Startup;
-using AutoMapper;
 using Dto;
 using Interface;
-using Interface.Command;
-using Interface.IRepositories;
-using Interface.Queries;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -16,8 +12,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Repositories.Repositories;
 using Serilog;
-using Service.CommandService;
-using Service.QueriesService;
 using System.Globalization;
 using Webdemo.Exstnsion;
 
@@ -33,11 +27,6 @@ public static class Startup
              .CreateLogger();
         services.AddLogging();
         services.AddSerilog(logger);
-
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<ICarteService, CartService>();
-        services.AddScoped<IOrderCommandService, OrderCommand>();
-
         // Replace the problematic line with the following:
         services.AddDbContext<WebDemoDbContext>(options =>
            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
@@ -71,7 +60,7 @@ public static class Startup
 
         // Add controllers with views (MVC)
         services.AddControllersWithViews();
-
+        services.AddProjectServices();
         // Add Razor Pages
         services.AddRazorPages();
 
