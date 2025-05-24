@@ -1,6 +1,7 @@
 ﻿namespace Webdemo.Startup;
 using Dto;
 using Interface;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -10,9 +11,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Repositories.Repositories;
 using Serilog;
+using System;
 using System.Globalization;
+using System.Text;
 using Webdemo.Exstnsion;
 
 public static class Startup
@@ -28,7 +32,7 @@ public static class Startup
         services.AddLogging();
         services.AddSerilog(logger);
         // Replace the problematic line with the following:
-        services.AddDbContext<WebDemoDbContext>(options =>
+         services.AddDbContext<WebDemoDbContext>(options =>
            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
         services.AddAutoMapper(typeof(MappingProfile).Assembly);
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -78,7 +82,30 @@ public static class Startup
             options.RequestCultureProviders.Insert(1, new CookieRequestCultureProvider());
 
         });
+        services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<WebDemoDbContext>()
+    .AddDefaultTokenProviders();
 
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = "yourdomain.com",
+                ValidAudience = "yourdomain.com",
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your_secret_key_here"))
+            };
+        });
+
+        services.AddAuthorization();
 
     }
 

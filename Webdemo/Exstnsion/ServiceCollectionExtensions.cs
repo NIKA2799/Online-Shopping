@@ -1,7 +1,9 @@
-﻿using Interface.Command;
+﻿using Interface;
+using Interface.Command;
 using Interface.IRepositories;
 using Interface.Queries;
 using Repositories.Repositories;
+using Service;
 using Service.CommandService;
 using Service.QueriesService;
 
@@ -23,6 +25,7 @@ namespace Webdemo.Exstnsion
             services.AddScoped<IReviewCommandService, ReviewCommandService>();
             services.AddScoped<IWhishlistService, WhishlistService>();
             services.AddScoped<IShippingService, ShippingService>();
+            services.AddScoped<IAuthService, AuthService>();
             return services;
         }
     }
