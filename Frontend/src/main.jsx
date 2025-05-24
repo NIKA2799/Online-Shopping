@@ -7,6 +7,9 @@ import App from "@/App";
 import "./index.css";
 import "primeicons/primeicons.css";
 
+// Middlaware
+import { AuthProvider } from "@/context/AuthContext";
+
 // ❶ create one client for the whole app
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,9 +26,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     {/* ❷ wrap your entire router/app in the provider */}
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>
 );

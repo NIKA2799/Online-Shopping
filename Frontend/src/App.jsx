@@ -1,6 +1,12 @@
 import { Routes, Route, Outlet } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+
+import LoginForm from "@/components/Auth/LoginForm";
+import RegisterForm from "@/components/Auth/RegisterForm";
+import Profile from "@/pages/Profile";
+import RequireAuth from "@/components/Auth/RequireAuth";
+
 import Home from "@/pages/Home";
 import Products from "@/pages/Products";
 import ProductDetails from "@/pages/ProductDetails"; // ⬅ NEW
@@ -20,7 +26,16 @@ export default function App() {
           {/* All routes share the same Header & Footer, so wrap in an Outlet */}
           <Route element={<Outlet />}>
             <Route path="/" element={<Home />} />
-
+            <Route path="/login" element={<LoginForm />} />
+            <Route path="/register" element={<RegisterForm />} />
+            <Route
+              path="/profile"
+              element={
+                <RequireAuth>
+                  <Profile />
+                </RequireAuth>
+              }
+            />
             {/* Catalogue & item pages */}
             <Route path="/products" element={<Products />} />
             <Route path="/products/:productId" element={<ProductDetails />} />
