@@ -25,7 +25,6 @@ namespace Webdemo.Exstnsion
             services.AddScoped<IReviewCommandService, ReviewCommandService>();
             services.AddScoped<IWhishlistService, WhishlistService>();
             services.AddScoped<IShippingService, ShippingService>();
-            services.AddScoped<IAuthService, AuthService>();
             return services;
         }
     }

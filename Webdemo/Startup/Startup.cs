@@ -86,26 +86,10 @@ public static class Startup
     .AddEntityFrameworkStores<WebDemoDbContext>()
     .AddDefaultTokenProviders();
 
-        services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-        .AddJwtBearer(options =>
-        {
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = "yourdomain.com",
-                ValidAudience = "yourdomain.com",
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your_secret_key_here"))
-            };
-        });
+       
+       
 
-        services.AddAuthorization();
+      services.AddAuthorization();
 
     }
 

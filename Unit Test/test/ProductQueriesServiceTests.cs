@@ -452,10 +452,11 @@ namespace Unit_Test.test
             };
 
             _unitOfWorkMock.Setup(u => u.ProductRepository.FindByCondition(It.IsAny<Expression<Func<Product, bool>>>()))
-                .Returns(new List<Product> { product }.AsQueryable());
+            .Returns(new List<Product> { product }.AsQueryable());
 
             _unitOfWorkMock.Setup(u => u.ProductRepository.FindByCondition(It.IsAny<Expression<Func<Product, bool>>>()))
                 .Returns(relatedProducts.AsQueryable());
+
 
             _mapperMock.Setup(m => m.Map<List<ProductModel>>(relatedProducts)).Returns(mapped);
 
