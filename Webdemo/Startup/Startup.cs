@@ -14,9 +14,9 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Repositories.Repositories;
 using Serilog;
-using System;
 using System.Globalization;
 using System.Text;
+using System.Threading.Tasks;
 using Webdemo.Exstnsion;
 
 public static class Startup
@@ -32,8 +32,8 @@ public static class Startup
         services.AddLogging();
         services.AddSerilog(logger);
         // Replace the problematic line with the following:
-         services.AddDbContext<WebDemoDbContext>(options =>
-           options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+        services.AddDbContext<WebDemoDbContext>(options =>
+          options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
         services.AddAutoMapper(typeof(MappingProfile).Assembly);
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         {
@@ -86,15 +86,29 @@ public static class Startup
     .AddEntityFrameworkStores<WebDemoDbContext>()
     .AddDefaultTokenProviders();
 
-       
-       
-
-      services.AddAuthorization();
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+ .AddJwtBearer(options =>
+ {
+     options.TokenValidationParameters = new TokenValidationParameters
+     {
+         ValidateIssuer = true,
+         ValidateAudience = true,
+         ValidateLifetime = true,
+         ValidateIssuerSigningKey = true,
+         ValidIssuer = configuration["Jwt:Issuer"],
+         ValidAudience = configuration["Jwt:Audience"],
+         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]))
+     };
+ });
+        services.AddAuthorization();
 
     }
-
     // This method gets called by the runtime to configure the HTTP request pipeline.
-    public static void Configure(this IApplicationBuilder app, IWebHostEnvironment env)
+    public static async Task ConfigureAsync(this IApplicationBuilder app, IWebHostEnvironment env)
     {
         if (env.IsDevelopment())
         {

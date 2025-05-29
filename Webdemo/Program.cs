@@ -1,4 +1,5 @@
 using Serilog;
+using Webdemo.Exstnsion;
 using Webdemo.Startup;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,5 +13,10 @@ builder.Host.UseSerilog((context, services, configuration) =>
 });
 Startup.ConfigureServices(builder.Services, builder.Configuration);
 var app = builder.Build();
-Startup.Configure(app, builder.Environment);
+Startup.ConfigureAsync(app, builder.Environment);
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await SeedAdminHelper.SeedAdminAsync(services);
+}
 app.Run();
