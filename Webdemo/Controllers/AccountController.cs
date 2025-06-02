@@ -2,7 +2,11 @@
 using Interface;
 using Interface.Model;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Repositories.Repositories;
+using Webdemo.Exstnsion;
 
 namespace Webdemo.Controllers
 {
@@ -13,14 +17,17 @@ namespace Webdemo.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ITokenService _tokenService;
-
+        private readonly WebDemoDbContext _context;
+        private readonly IEmailConfiguration _emailSender;
         public AccountController(UserManager<ApplicationUser> userManager,
                                  SignInManager<ApplicationUser> signInManager,
-                                 ITokenService tokenService)
+                                 ITokenService tokenService, WebDemoDbContext context, IEmailConfiguration emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _tokenService = tokenService;
+            _context = context;
+            _emailSender = emailSender;
         }
 
         [HttpPost("register")]
@@ -49,20 +56,33 @@ namespace Webdemo.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Default role: user
+            // ➕ მომხმარებლისთვის როლის მინიჭება
             await _userManager.AddToRoleAsync(user, "user");
 
-            // Email confirmation token
+            // ➕ Customer-ის შექმნა
+            var customer = new Customer
+            {
+                Name = model.Name,
+                Email = model.Email,
+                PhoneNumber = model.PhoneNumber,
+                ShippingAddress = model.ShippingAddress,
+                BillingAddress = model.BillingAddress,
+                Password = model.Password, // დაიჰეშება ავტომატურად
+                ApplicationUserId = user.Id
+            };
+
+            _context.Customer.Add(customer);
+            await _context.SaveChangesAsync();
+
+            // ➕ Email-ის დადასტურების ლინკის გენერაცია
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var confirmationLink = Url.Action(nameof(ConfirmEmail), "Account",
-                                             new { userId = user.Id, token = token }, Request.Scheme);
-
-            // TODO: გამოაგზავნე confirmationLink მეილით
+                                              new { userId = user.Id, token = token }, Request.Scheme);
 
             return Ok(new
             {
                 message = "Registration successful. Please confirm your email.",
-                confirmationLink // მხოლოდ ტესტირებისთვის
+                confirmationLink
             });
         }
 
@@ -78,9 +98,19 @@ namespace Webdemo.Controllers
 
             var result = await _userManager.ConfirmEmailAsync(user, token);
             if (result.Succeeded)
+            {
+                // ✅ Fix: Correctly pass all required parameters to SendEmailAsync
+#pragma warning disable CS8604 // Possible null reference argument.
+                await _emailSender.SendEmailAsync(user.Email, "Email Confirmed",
+                    $"Hello {user.UserName}, your email has been successfully confirmed. 🎉");
+#pragma warning restore CS8604 // Possible null reference argument.
+
                 return Ok("Email confirmed successfully.");
+            }
             else
+            {
                 return BadRequest("Email confirmation failed.");
+            }
         }
 
         [HttpPost("login")]

@@ -14,17 +14,17 @@ namespace Repositories.Repositories
         public DbSet<Cart> Carts { get; set; } = null!;
         public DbSet<Category> Categories { get; set; } = null!;
         public DbSet<Order> Orders { get; set; } = null!;
-        public OrderDetail OrderDetail { get; set; } = null!;
-        public CartItem CartItem { get; set; } = null!;
-        public Customer Customer { get; set; } = null!;
-        public Discount Discount { get; set; } = null!;
-        public Inventory Inventory { get; set; } = null!;
-        public Payment payment { get; set; } = null!;
-        public Product Product { get; set; } = null!;
-        public Review Review { get; set; } = null!;
-        public Shipping Shipping { get; set; } = null!;
-        public Wishlist Wishlist { get; set; } = null!;
-        public WishlistItem WishlistItem { get; set; } = null!;
+        public DbSet <OrderDetail> OrderDetail { get; set; } = null!;
+        public DbSet <CartItem> CartItem { get; set; } = null!;
+        public DbSet  <Customer> Customer { get; set; } = null!;
+        public DbSet <Discount> Discount { get; set; } = null!;
+        public DbSet <Inventory> Inventory { get; set; } = null!;
+        public DbSet <Payment> payment { get; set; } = null!;
+        public DbSet <Product> Product { get; set; } = null!;
+        public DbSet <Review> Review { get; set; } = null!;
+        public DbSet <Shipping> Shipping { get; set; } = null!;
+        public DbSet<Wishlist>Wishlist { get; set; } = null!;
+        public DbSet <WishlistItem> WishlistItem { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new OrderConfiguration());

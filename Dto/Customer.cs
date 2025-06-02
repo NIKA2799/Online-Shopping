@@ -27,5 +27,6 @@ namespace Dto
             get => _password;
             set => _password = BCrypt.Net.BCrypt.HashPassword(value);
         }
+        public string ApplicationUserId { get; set; }
     }
 }

@@ -20,5 +20,9 @@ namespace Interface.Model
         [Required]
         [Compare("Password", ErrorMessage = "Passwords do not match")]
         public string ConfirmPassword { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Name { get; set; }
+        public string ShippingAddress { get; set; }
+        public string BillingAddress { get; set; }
     }
 }

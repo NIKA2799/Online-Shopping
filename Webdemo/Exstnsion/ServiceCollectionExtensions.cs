@@ -2,6 +2,7 @@
 using Interface.Command;
 using Interface.IRepositories;
 using Interface.Queries;
+using Microsoft.AspNetCore.Identity;
 using Repositories.Repositories;
 using Service;
 using Service.CommandService;
@@ -26,6 +27,7 @@ namespace Webdemo.Exstnsion
             services.AddScoped<IWhishlistService, WhishlistService>();
             services.AddScoped<IShippingService, ShippingService>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IEmailConfiguration, EmailService>();
             return services;
         }
     }

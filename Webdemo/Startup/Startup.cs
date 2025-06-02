@@ -1,6 +1,7 @@
 ﻿namespace Webdemo.Startup;
 using Dto;
 using Interface;
+using Interface.Model;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -67,7 +68,8 @@ public static class Startup
         services.AddProjectServices();
         // Add Razor Pages
         services.AddRazorPages();
-
+        services.Configure<EmailSettings>(
+        configuration.GetSection("EmailSettings"));
         // Add session support (optional)
         services.AddSession();
         services.AddLocalization(options => options.ResourcesPath = "Resources");
