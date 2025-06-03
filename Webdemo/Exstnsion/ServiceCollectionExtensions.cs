@@ -27,6 +27,7 @@ namespace Webdemo.Exstnsion
             services.AddScoped<IWhishlistService, WhishlistService>();
             services.AddScoped<IShippingService, ShippingService>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IEmailConfiguration, EmailService>();
             return services;
         }
