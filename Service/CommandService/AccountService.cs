@@ -61,7 +61,7 @@ namespace Service.CommandService
 
             await _userManager.AddToRoleAsync(user, "user");
 
-            // ⬇️ აქ ვიყენებთ შენს CustomerService-ს
+            // ⬇️ აქ ვიყენებთ შენს UserService-ს
             await _customerService.CreateCustomerAsync(model, user.Id);
 
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);

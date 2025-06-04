@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Dto
 {
-    public class Customer : IEntity
+    public class User : IEntity
     {
 
         public int Id { get; set; }

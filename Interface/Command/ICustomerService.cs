@@ -11,10 +11,10 @@ namespace Interface.Command
 {
     public interface ICustomerService
     {
-        CustomerModel GetCustomerById(int id);
-        IEnumerable<CustomerModel> GetAllCustomers();
-        Task<Customer> CreateCustomerAsync(RegisterModel model, string applicationUserId);
-        void UpdateCustomer(int id, CustomerModel model);
+        UserModel GetCustomerById(int id);
+        IEnumerable<UserModel> GetAllCustomers();
+        Task<User> CreateCustomerAsync(RegisterModel model, string applicationUserId);
+        void UpdateCustomer(int id, UserModel model);
         void DeleteCustomer(int id);
 
         // 💡 გაყიდვისთვის საჭირო

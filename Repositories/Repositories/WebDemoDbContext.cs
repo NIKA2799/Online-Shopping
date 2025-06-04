@@ -16,7 +16,7 @@ namespace Repositories.Repositories
         public DbSet<Order> Orders { get; set; } = null!;
         public DbSet <OrderDetail> OrderDetail { get; set; } = null!;
         public DbSet <CartItem> CartItem { get; set; } = null!;
-        public DbSet  <Customer> Customer { get; set; } = null!;
+        public DbSet  <User> Customer { get; set; } = null!;
         public DbSet <Discount> Discount { get; set; } = null!;
         public DbSet <Inventory> Inventory { get; set; } = null!;
         public DbSet <Payment> payment { get; set; } = null!;

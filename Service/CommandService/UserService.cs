@@ -13,32 +13,32 @@ using Webdemo.Models;
 
 namespace Service.CommandService
 {
-    public class CustomerService : ICustomerService
+    public class UserService : ICustomerService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
-        public CustomerService(IUnitOfWork unitOfWork, IMapper mapper)
+        public UserService(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
 
-        public CustomerModel GetCustomerById(int id)
+        public UserModel GetCustomerById(int id)
         {
             var entity = _unitOfWork.CustomerRepository.GetById(id);
-            return _mapper.Map<CustomerModel>(entity);
+            return _mapper.Map<UserModel>(entity);
         }
 
-        public IEnumerable<CustomerModel> GetAllCustomers()
+        public IEnumerable<UserModel> GetAllCustomers()
         {
             var customers = _unitOfWork.CustomerRepository.GetAll();
-            return _mapper.Map<IEnumerable<CustomerModel>>(customers);
+            return _mapper.Map<IEnumerable<UserModel>>(customers);
         }
 
-        public async Task<Customer> CreateCustomerAsync(RegisterModel model, string applicationUserId)
+        public async Task<User> CreateCustomerAsync(RegisterModel model, string applicationUserId)
         {
-            var customer = new Customer
+            var customer = new User
             {
                 Name = model.Name,
                 Email = model.Email,
@@ -55,7 +55,7 @@ namespace Service.CommandService
         }
 
 
-        public void UpdateCustomer(int id, CustomerModel model)
+        public void UpdateCustomer(int id, UserModel model)
         {
             var existing = _unitOfWork.CustomerRepository.GetById(id);
             if (existing != null)
@@ -76,7 +76,7 @@ namespace Service.CommandService
             }
         }
 
-        // ✅ პროდუქტის ატვირთვა მომხმარებლის მიერ
+       
         public int UploadProduct(ProductModel productModel, int customerId)
         {
             var customer = _unitOfWork.CustomerRepository.GetById(customerId);
@@ -88,7 +88,7 @@ namespace Service.CommandService
             product.IsOutOfStock = false;
             product.IsFeatured = false;
 
-            // 📌 დავაკავშიროთ მომხმარებელთან
+         
             product.UserId = customerId;
 
             _unitOfWork.ProductRepository.Insert(product);
@@ -96,7 +96,7 @@ namespace Service.CommandService
             return product.Id;
         }
 
-        // ✅ მომხმარებლის ატვირთული პროდუქტების ნახვა
+      
         public IEnumerable<ProductModel> GetMyProducts(int customerId)
         {
             var products = _unitOfWork.ProductRepository

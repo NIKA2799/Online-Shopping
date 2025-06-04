@@ -79,8 +79,8 @@ namespace Unit_Test.test
         [Fact]
         public void Checkout_ShouldReturnFalse_WhenCustomerNotFound()
         {
-            _unitOfWorkMock.Setup(u => u.CustomerRepository.FindByCondition(It.IsAny<Expression<Func<Customer, bool>>>()))
-                           .Returns(Enumerable.Empty<Customer>().AsQueryable());
+            _unitOfWorkMock.Setup(u => u.CustomerRepository.FindByCondition(It.IsAny<Expression<Func<User, bool>>>()))
+                           .Returns(Enumerable.Empty<User>().AsQueryable());
 
             var result = _cartService.Checkout(1, new CheckoutModel());
 
@@ -90,10 +90,10 @@ namespace Unit_Test.test
         [Fact]
         public void Checkout_ShouldReturnFalse_WhenCartIsEmpty()
         {
-            var customer = new Customer { Id = 1, Name = "Test Customer" }; // Fixed CS9035 by setting the required 'Name' property.  
+            var customer = new User { Id = 1, Name = "Test Customer" }; // Fixed CS9035 by setting the required 'Name' property.  
 
-            _unitOfWorkMock.Setup(u => u.CustomerRepository.FindByCondition(It.IsAny<Expression<Func<Customer, bool>>>()))
-                           .Returns(new List<Customer> { customer }.AsQueryable());
+            _unitOfWorkMock.Setup(u => u.CustomerRepository.FindByCondition(It.IsAny<Expression<Func<User, bool>>>()))
+                           .Returns(new List<User> { customer }.AsQueryable());
 
             _unitOfWorkMock.Setup(u => u.CartRepository.FindByCondition(It.IsAny<Expression<Func<Cart, bool>>>()))
                            .Returns(new List<Cart> { new Cart { Id = 1, CustomerId = 1 } }.AsQueryable());

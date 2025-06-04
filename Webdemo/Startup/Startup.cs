@@ -93,24 +93,30 @@ public static class Startup
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
         })
- .AddJwtBearer(options =>
- {
-     options.TokenValidationParameters = new TokenValidationParameters
-     {
-         ValidateIssuer = true,
-         ValidateAudience = true,
-         ValidateLifetime = true,
-         ValidateIssuerSigningKey = true,
-         ValidIssuer = configuration["Jwt:Issuer"],
-         ValidAudience = configuration["Jwt:Audience"],
-         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]))
-     };
- });
+          .AddJwtBearer(options =>
+          {
+              var jwtKey = configuration["Jwt:Key"];
+              if (string.IsNullOrEmpty(jwtKey))
+              {
+                  throw new ArgumentNullException(nameof(jwtKey), "Jwt:Key configuration value cannot be null or empty.");
+              }
+
+              options.TokenValidationParameters = new TokenValidationParameters
+              {
+                  ValidateIssuer = true,
+                  ValidateAudience = true,
+                  ValidateLifetime = true,
+                  ValidateIssuerSigningKey = true,
+                  ValidIssuer = configuration["Jwt:Issuer"],
+                  ValidAudience = configuration["Jwt:Audience"],
+                  IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+              };
+          });
         services.AddAuthorization();
 
     }
     // This method gets called by the runtime to configure the HTTP request pipeline.
-    public static async Task ConfigureAsync(this IApplicationBuilder app, IWebHostEnvironment env)
+    public static Task ConfigureAsync(this IApplicationBuilder app, IWebHostEnvironment env)
     {
         if (env.IsDevelopment())
         {
@@ -119,30 +125,34 @@ public static class Startup
         else
         {
             app.UseExceptionHandler("/Home/Error");
-            app.UseHsts(); // Enforce HTTP Strict Transport Security
+            app.UseHsts(); // Enforce HTTP Strict Transport Security  
         }
+
         var locOptions = app.ApplicationServices.GetRequiredService<IOptions<RequestLocalizationOptions>>();
         app.UseRequestLocalization(locOptions.Value);
 
-        app.UseHttpsRedirection(); // Redirect HTTP requests to HTTPS
-        app.UseStaticFiles();      // Serve static files (CSS, JS, images)
+        app.UseHttpsRedirection(); // Redirect HTTP requests to HTTPS  
+        app.UseStaticFiles();      // Serve static files (CSS, JS, images)  
         app.UseCustomMiddleware();
-        app.UseRouting();          // Enable routing middleware
+        app.UseRouting();          // Enable routing middleware  
 
-        app.UseAuthentication();   // Enable authentication middleware
-        app.UseAuthorization();    // Enable authorization middleware
+        app.UseAuthentication();   // Enable authentication middleware  
+        app.UseAuthorization();    // Enable authorization middleware  
 
-        app.UseSession();          // Enable session state
+        app.UseSession();          // Enable session state  
 
         app.UseEndpoints(endpoints =>
         {
-            // Default route for MVC
+            // Default route for MVC  
             endpoints.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
-            // Razor Pages route
+            // Razor Pages route  
             endpoints.MapRazorPages();
         });
+
+        // Return a completed task to avoid CS1998 diagnostic  
+        return Task.CompletedTask;
     }
 }

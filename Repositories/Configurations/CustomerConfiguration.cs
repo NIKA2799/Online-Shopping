@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace Repositories.Configurations
 {
-    public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
+    public class CustomerConfiguration : IEntityTypeConfiguration<User>
     {
-        public void Configure(EntityTypeBuilder<Customer> entity)
+        public void Configure(EntityTypeBuilder<User> entity)
         {
 
             // Primary Key

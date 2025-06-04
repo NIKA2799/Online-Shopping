@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Interface.Model
 {
-    public class CustomerModel : IEntityModel
+    public class UserModel : IEntityModel
     {
         public int Id { get; set; }
         public required string Name { get; set; }

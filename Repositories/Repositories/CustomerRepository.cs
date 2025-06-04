@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Repositories.Repositories
 {
-    public class CustomerRepository : RepositoryBase<Customer>, ICustomerRepository
+    public class CustomerRepository : RepositoryBase<User>, ICustomerRepository
     {
         public CustomerRepository(WebDemoDbContext dbContext) : base(dbContext)
         {
