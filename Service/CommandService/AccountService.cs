@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Interface.IRepositories;
+using Interface.Command;
 
 namespace Service.CommandService
 {
@@ -16,7 +18,8 @@ namespace Service.CommandService
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ITokenService _tokenService;
-        private readonly WebDemoDbContext _context;
+        private readonly ICustomerService _customerService;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailConfiguration _emailSender;
 
         public AccountService(
@@ -24,13 +27,16 @@ namespace Service.CommandService
             SignInManager<ApplicationUser> signInManager,
             ITokenService tokenService,
             WebDemoDbContext context,
-            IEmailConfiguration emailSender)
+            IUnitOfWork unitOfWork,
+           ICustomerService customerService,
+
+        IEmailConfiguration emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _tokenService = tokenService;
-            _context = context;
             _emailSender = emailSender;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<(bool Success, string? Error, object? Result)> RegisterAsync(RegisterModel model, Func<string, string, object, string> urlAction)
@@ -55,19 +61,8 @@ namespace Service.CommandService
 
             await _userManager.AddToRoleAsync(user, "user");
 
-            var customer = new Customer
-            {
-                Name = model.Name,
-                Email = model.Email,
-                PhoneNumber = model.PhoneNumber,
-                ShippingAddress = model.ShippingAddress,
-                BillingAddress = model.BillingAddress,
-                Password = model.Password,
-                ApplicationUserId = user.Id
-            };
-
-            _context.Customer.Add(customer);
-            await _context.SaveChangesAsync();
+            // ⬇️ აქ ვიყენებთ შენს CustomerService-ს
+            await _customerService.CreateCustomerAsync(model, user.Id);
 
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var confirmationLink = urlAction("ConfirmEmail", "Account", new { userId = user.Id, token });

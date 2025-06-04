@@ -59,6 +59,15 @@ namespace Repositories.Configurations
                   .WithOne(w => w.Customer)
                   .HasForeignKey(w => w.CustomerId)
                   .OnDelete(DeleteBehavior.Cascade);
+            entity.HasKey(c => c.Id);
+
+            entity.Property(c => c.Name).IsRequired();
+            entity.Property(c => c.DateCreated).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(c => c.ApplicationUser)
+                   .WithMany()
+                   .HasForeignKey(c => c.ApplicationUserId)
+                   .OnDelete(DeleteBehavior.Cascade);
 
             // Optional: Specify table name
             entity.ToTable("Customers");
