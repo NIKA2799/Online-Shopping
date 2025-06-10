@@ -11,6 +11,6 @@ namespace Interface.Queries
 {
     public interface ICategoryQurey : IQueryModel<CategoryModel,Category>
     {
-     
+        IEnumerable<ProductModel> GetProductsByCategory(int categoryId);
     }
 }

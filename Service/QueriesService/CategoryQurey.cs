@@ -24,8 +24,8 @@ namespace Service.QueriesService
         }
         public IEnumerable<CategoryModel> FindAll()
         {
-            var model = _unitOfWork.CategoryRepository.FindAll().SingleOrDefault();
-            var category = _mapper.Map <List<CategoryModel>>(model);
+            var model = _unitOfWork.CategoryRepository.FindAll().ToList();
+            var category = _mapper.Map<List<CategoryModel>>(model);
             return category;
         }
 

@@ -1,5 +1,6 @@
 ﻿using Interface.Command;
 using Interface.Model;
+using Interface.Queries;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Webdemo.Controllers
@@ -9,10 +10,12 @@ namespace Webdemo.Controllers
     public class CartController : ControllerBase
     {
         private readonly ICarteService _cartService;
+      
 
         public CartController(ICarteService cartService)
         {
             _cartService = cartService;
+         
         }
 
         [HttpGet("user/{customerId}")]
@@ -69,11 +72,11 @@ namespace Webdemo.Controllers
             var items = _cartService.GetCartItems(cartId);
             return Ok(items);
         }
+
         public IActionResult DeletCart(int id)
         {
             _cartService.DeletCart(id);
             return Ok(new { Message = "Cart delete successfully" });
         }
-
     }
 }
