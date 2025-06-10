@@ -63,6 +63,12 @@ namespace Repositories.Configurations
                   .WithOne(pc => pc.Product)
                   .HasForeignKey(pc => pc.ProductId)
                   .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(p => p.User)
+
+      .WithMany(u => u.Products)
+      .HasForeignKey(p => p.UserId)
+      .OnDelete(DeleteBehavior.Cascade);
+
 
             // Table Name (optional)
             entity.ToTable("Products");

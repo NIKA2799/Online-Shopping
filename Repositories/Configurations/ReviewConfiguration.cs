@@ -13,18 +13,17 @@ namespace Repositories.Configurations
     {
         public void Configure(EntityTypeBuilder<Review> entity)
         {
-            // Configure the primary key
+            // Primary Key
             entity.HasKey(r => r.Id);
 
-            // Rating (1-5)
-            entity.Property(r => r.Rating)
-                  .IsRequired();
+            // Rating
+            entity.Property(r => r.Rating).IsRequired();
 
-            // Comment (optional)
+            // Comment
             entity.Property(r => r.Comment)
                   .HasMaxLength(1000);
 
-            // DatePosted (optional default)
+            // DatePosted
             entity.Property(r => r.DatePosted)
                   .HasDefaultValueSql("GETUTCDATE()");
 
@@ -32,15 +31,15 @@ namespace Repositories.Configurations
             entity.HasOne(r => r.Product)
                   .WithMany()
                   .HasForeignKey(r => r.ProductId)
-                  .OnDelete(DeleteBehavior.Cascade);
+                  .OnDelete(DeleteBehavior.Restrict); // ✅ შეცვლილია Restrict-ად
 
             // Customer (1 Customer → Many Reviews)
             entity.HasOne(r => r.Customer)
                   .WithMany()
                   .HasForeignKey(r => r.CustomerId)
-                  .OnDelete(DeleteBehavior.Cascade);
+                  .OnDelete(DeleteBehavior.Cascade); // ✅ კასკადი მომხმარებელზე დარჩება
 
-            // Optional Table Name
+            // Table name
             entity.ToTable("Reviews");
         }
     }

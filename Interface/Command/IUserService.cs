@@ -9,7 +9,7 @@ using Webdemo.Models;
 
 namespace Interface.Command
 {
-    public interface ICustomerService
+    public interface IUserService
     {
         UserModel GetCustomerById(int id);
         IEnumerable<UserModel> GetAllCustomers();

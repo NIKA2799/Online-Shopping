@@ -12,7 +12,7 @@ using Repositories.Repositories;
 namespace Repositories.Migrations
 {
     [DbContext(typeof(WebDemoDbContext))]
-    [Migration("20250501085316_InitialDBCeation")]
+    [Migration("20250610094035_InitialDBCeation")]
     partial class InitialDBCeation
     {
         /// <inheritdoc />
@@ -43,14 +43,6 @@ namespace Repositories.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -128,7 +120,6 @@ namespace Repositories.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Items")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
@@ -169,49 +160,6 @@ namespace Repositories.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("Dto.Customer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("BillingAddress")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<DateTime>("DateCreated")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("ShippingAddress")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Customers", (string)null);
                 });
 
             modelBuilder.Entity("Dto.Discount", b =>
@@ -453,6 +401,58 @@ namespace Repositories.Migrations
                     b.ToTable("Shipping");
                 });
 
+            modelBuilder.Entity("Dto.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ApplicationUserId1")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("BillingAddress")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ShippingAddress")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.HasIndex("ApplicationUserId1")
+                        .IsUnique()
+                        .HasFilter("[ApplicationUserId1] IS NOT NULL");
+
+                    b.ToTable("Customers", (string)null);
+                });
+
             modelBuilder.Entity("Dto.Wishlist", b =>
                 {
                     b.Property<int>("Id")
@@ -640,6 +640,9 @@ namespace Repositories.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -681,14 +684,19 @@ namespace Repositories.Migrations
                     b.Property<int>("Stock")
                         .HasColumnType("int");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("Dto.Cart", b =>
                 {
-                    b.HasOne("Dto.Customer", "Customer")
+                    b.HasOne("Dto.User", "Customer")
                         .WithMany("Carts")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -729,7 +737,7 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Dto.Order", b =>
                 {
-                    b.HasOne("Dto.Customer", "Customer")
+                    b.HasOne("Dto.User", "Customer")
                         .WithMany("Orders")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -789,7 +797,7 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Dto.Review", b =>
                 {
-                    b.HasOne("Dto.Customer", "Customer")
+                    b.HasOne("Dto.User", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -798,7 +806,7 @@ namespace Repositories.Migrations
                     b.HasOne("Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Customer");
@@ -817,9 +825,24 @@ namespace Repositories.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("Dto.User", b =>
+                {
+                    b.HasOne("Dto.ApplicationUser", "ApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Dto.ApplicationUser", null)
+                        .WithOne("User")
+                        .HasForeignKey("Dto.User", "ApplicationUserId1");
+
+                    b.Navigation("ApplicationUser");
+                });
+
             modelBuilder.Entity("Dto.Wishlist", b =>
                 {
-                    b.HasOne("Dto.Customer", "Customer")
+                    b.HasOne("Dto.User", "Customer")
                         .WithMany("Wishlists")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -898,6 +921,22 @@ namespace Repositories.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Product", b =>
+                {
+                    b.HasOne("Dto.User", "User")
+                        .WithMany("Products")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Dto.ApplicationUser", b =>
+                {
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Dto.Cart", b =>
                 {
                     b.Navigation("Items");
@@ -908,18 +947,20 @@ namespace Repositories.Migrations
                     b.Navigation("ProductCategories");
                 });
 
-            modelBuilder.Entity("Dto.Customer", b =>
+            modelBuilder.Entity("Dto.Order", b =>
+                {
+                    b.Navigation("OrderDetails");
+                });
+
+            modelBuilder.Entity("Dto.User", b =>
                 {
                     b.Navigation("Carts");
 
                     b.Navigation("Orders");
 
-                    b.Navigation("Wishlists");
-                });
+                    b.Navigation("Products");
 
-            modelBuilder.Entity("Dto.Order", b =>
-                {
-                    b.Navigation("OrderDetails");
+                    b.Navigation("Wishlists");
                 });
 
             modelBuilder.Entity("Dto.Wishlist", b =>

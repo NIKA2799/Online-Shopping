@@ -27,6 +27,7 @@ namespace Repositories.Configurations
                   .WithMany(c => c.ProductCategories)
                   .HasForeignKey(pc => pc.CategoryId)
                   .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 }

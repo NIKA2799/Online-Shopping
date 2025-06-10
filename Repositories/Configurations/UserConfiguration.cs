@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Repositories.Configurations
 {
-    public class CustomerConfiguration : IEntityTypeConfiguration<User>
+    public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         public void Configure(EntityTypeBuilder<User> entity)
         {

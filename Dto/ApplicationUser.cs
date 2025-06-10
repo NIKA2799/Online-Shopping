@@ -9,6 +9,6 @@ namespace Dto
 {
     public class ApplicationUser: IdentityUser
     {
-        public User? Customer { get; set; }
+        public User? User { get; set; }
     }
 }

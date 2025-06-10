@@ -17,6 +17,8 @@ public class Product : IEntity
     public bool IsFeatured { get; set; }
     public bool IsOutOfStock { get; set; }
     public string Items { get; set; }
+    public int CustomerId { get; set; }
+    public User User { get; set; }
     public int UserId { get; set; }
 }
 

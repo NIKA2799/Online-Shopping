@@ -13,7 +13,7 @@ using Webdemo.Models;
 
 namespace Service.CommandService
 {
-    public class UserService : ICustomerService
+    public class UserService : IUserService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;

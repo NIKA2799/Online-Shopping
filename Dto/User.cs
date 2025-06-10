@@ -18,9 +18,9 @@ namespace Dto
         public string? BillingAddress { get; set; }
         public DateTime DateCreated { get; set; } = DateTime.UtcNow;
 
-        public string ApplicationUserId { get; set; }
+        public string ApplicationUserId { get; set; } // დარჩეს string
         public ApplicationUser ApplicationUser { get; set; }
-
+        public ICollection<Product> Products { get; set; }
         public ICollection<Order>? Orders { get; set; }
         public ICollection<Cart>? Carts { get; set; }
         public ICollection<Wishlist>? Wishlists { get; set; }

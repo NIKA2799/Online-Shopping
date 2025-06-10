@@ -18,7 +18,7 @@ namespace Service.CommandService
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ITokenService _tokenService;
-        private readonly ICustomerService _customerService;
+        private readonly IUserService _user;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailConfiguration _emailSender;
 
@@ -26,9 +26,8 @@ namespace Service.CommandService
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             ITokenService tokenService,
-            WebDemoDbContext context,
             IUnitOfWork unitOfWork,
-           ICustomerService customerService,
+            IUserService user,
 
         IEmailConfiguration emailSender)
         {
@@ -37,6 +36,8 @@ namespace Service.CommandService
             _tokenService = tokenService;
             _emailSender = emailSender;
             _unitOfWork = unitOfWork;
+            _user = user;
+            
         }
 
         public async Task<(bool Success, string? Error, object? Result)> RegisterAsync(RegisterModel model, Func<string, string, object, string> urlAction)
@@ -62,7 +63,7 @@ namespace Service.CommandService
             await _userManager.AddToRoleAsync(user, "user");
 
             // ⬇️ აქ ვიყენებთ შენს UserService-ს
-            await _customerService.CreateCustomerAsync(model, user.Id);
+            await _user.CreateCustomerAsync(model, user.Id);
 
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var confirmationLink = urlAction("ConfirmEmail", "Account", new { userId = user.Id, token });
