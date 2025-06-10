@@ -25,10 +25,13 @@ namespace Service.CommandService
 
         public bool AddItemToCart(int customerid, int productId, int quantity)
         {
+            var customer = _unitOfWork.CustomerRepository.FindByCondition(c => c.Id == customerid).SingleOrDefault();
+            if (customer == null) return false;
+
             var cart = GetCartByUserId(customerid);
             if (cart == null)
             {
-                cart = new Cart { CustomerId = customerid };
+                cart = new Cart { CustomerId = customerid, Customer = customer };
                 _unitOfWork.CartRepository.Insert(cart);
                 _unitOfWork.SaveChanges();
             }
@@ -38,7 +41,6 @@ namespace Service.CommandService
                 CartId = cart.Id,
                 ProductId = productId,
                 Quantity = quantity
-
             };
             _unitOfWork.CartItemRepository.Insert(cartItem);
             _unitOfWork.SaveChanges();
