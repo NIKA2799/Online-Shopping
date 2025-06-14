@@ -30,6 +30,7 @@ namespace Webdemo.Exstnsion
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IEmailConfiguration, EmailService>();
+            services.AddScoped<IDiscountService, DiscountService>();
             return services;
         }
     }

@@ -6,9 +6,8 @@ namespace Webdemo.Exstnsion
     {
         public static IApplicationBuilder UseRequestMiddleware(this IApplicationBuilder app)
         {
-           return app.UseRequestLocalization(app.ApplicationServices.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value);
+            var locOptions = app.ApplicationServices.GetRequiredService<IOptions<RequestLocalizationOptions>>();
+            return app.UseRequestLocalization(locOptions.Value);
         }
     }
 }
-
-

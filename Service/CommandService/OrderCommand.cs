@@ -24,7 +24,7 @@ namespace Service.CommandService
                 order.Status = OrderStatus.Cancelled;
                 _unitOfWork.OrderRepository.Update(order);
 
-               
+
                 foreach (var detail in _unitOfWork.OrderDetailRepository.FindByCondition(d => d.OrderId == orderId))
                 {
                     var product = _unitOfWork.ProductRepository.GetById(detail.ProductId);
@@ -62,7 +62,7 @@ namespace Service.CommandService
             if (order != null)
             {
                 var updateorder = _mapper.Map<Order>(entityModel);
-                updateorder.Id =order.Id;
+                updateorder.Id = order.Id;
                 _unitOfWork.OrderRepository.Update(updateorder);
                 _unitOfWork.SaveChanges();
             }
@@ -78,18 +78,17 @@ namespace Service.CommandService
                 _unitOfWork.SaveChanges();
             }
         }
-        public int Checkout(CheckoutModel model)
+        public int Checkout(CheckoutModel checkoutModel)
         {
-            // 1. Load cart + items
             var cart = _unitOfWork.CartRepository
-                           .FindByCondition(c => c.CustomerId == model.Customerid)
-                           .Include(c => c.Items)
-                           .ThenInclude(i => i.Product)
-                           .SingleOrDefault();
+                         .FindByCondition(c => c.CustomerId == checkoutModel.Customerid)
+                         .Include(c => c.Items)
+                         .ThenInclude(i => i.Product)
+                         .SingleOrDefault();
+
             if (cart?.Items == null || !cart.Items.Any())
                 throw new InvalidOperationException("Cart is empty or does not exist.");
 
-            // 2. Validate stock and compute total
             decimal total = 0;
             foreach (var item in cart.Items)
             {
@@ -98,16 +97,29 @@ namespace Service.CommandService
                 total += item.Quantity * item.Product.Price;
             }
 
-            // 3. Build order + details
+            // ✅ ფასდაკლების გამოყენება (თუ არსებობს კოდი)
+            if (!string.IsNullOrWhiteSpace(checkoutModel.DiscountCode))
+            {
+                var discount = _unitOfWork.DiscountRepository
+                                  .FindByCondition(d => d.Code == checkoutModel.DiscountCode)
+                                  .FirstOrDefault();
+
+                if (discount != null && discount.ExpirationDate > DateTime.UtcNow)
+                {
+                    var discountAmount = total * (discount.DiscountPercentage / 100m);
+                    total -= discountAmount;
+                }
+            }
+
             var order = new Order
             {
-                CustomerId = model.Customerid,
+                CustomerId = checkoutModel.Customerid,
                 OrderDate = DateTime.UtcNow,
                 TotalAmount = total,
                 Status = OrderStatus.Pending,
-                ShippingAddress = model.ShippingAddress,
-                BillingAddress = model.BillingAddress,
-                PaymentMethod = model.PaymentMethod
+                ShippingAddress = checkoutModel.ShippingAddress,
+                BillingAddress = checkoutModel.BillingAddress,
+                PaymentMethod = checkoutModel.PaymentMethod
             };
             _unitOfWork.OrderRepository.Insert(order);
 
@@ -120,18 +132,16 @@ namespace Service.CommandService
                     Quantity = item.Quantity,
                     UnitPrice = item.Product.Price
                 };
+
                 _unitOfWork.OrderDetailRepository.Insert(detail);
 
-                // adjust stock
                 item.Product.Stock -= item.Quantity;
                 _unitOfWork.ProductRepository.Update(item.Product);
             }
 
-            // 4. Clear cart
             _unitOfWork.CartItemRepository.DeleteRange(cart.Items);
-
-            // 5. Commit once
             _unitOfWork.SaveChanges();
+
             return order.Id;
         }
         public OrderStatus? TrackOrderStatus(int orderId, int userId)
@@ -146,5 +156,5 @@ namespace Service.CommandService
             return order.Status;
         }
     }
-}
 
+}

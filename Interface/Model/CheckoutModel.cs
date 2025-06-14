@@ -22,6 +22,6 @@ namespace Interface.Model
         public DateTime OrderDate { get; set; }   // The date when the orde
 
         public int Customerid { get; set; }
-   
+        public string? DiscountCode { get; set; }
     }
 }

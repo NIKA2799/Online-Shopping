@@ -84,10 +84,6 @@ public static class Startup
             options.RequestCultureProviders.Insert(1, new CookieRequestCultureProvider());
 
         });
-        services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<WebDemoDbContext>()
-    .AddDefaultTokenProviders();
-
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -129,7 +125,7 @@ public static class Startup
         }
 
         var locOptions = app.ApplicationServices.GetRequiredService<IOptions<RequestLocalizationOptions>>();
-        app.UseRequestLocalization(locOptions.Value);
+        app.UseRequestMiddleware();
 
         app.UseHttpsRedirection(); // Redirect HTTP requests to HTTPS  
         app.UseStaticFiles();      // Serve static files (CSS, JS, images)  
