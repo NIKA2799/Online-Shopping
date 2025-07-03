@@ -1,8 +1,36 @@
-﻿@using Microsoft.Extensions.Localization
+@using Microsoft.Extensions.Localization
 @using Webdemo.Resources
 @inject IStringLocalizer<Webdemo.Resources.SharedResource> localizer
 
-<h1>@localizer["Welcome"]</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@localizer["Welcome"] - Webdemo</title>
 
-<a href="?culture=ka-GE&ui-culture=ka-GE">ქართული</a> |
-<a href="?culture=en-US&ui-culture=en-US">English</a>
+    <!-- ✅ Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Header or Navbar here if needed -->
+
+    <main class="container mx-auto py-10 px-4">
+        <h1 class="text-4xl font-bold mb-6">@localizer["Welcome"]</h1>
+
+        <div class="space-x-4">
+            <a href="?culture=ka-GE&ui-culture=ka-GE" class="text-blue-600 hover:underline">ქართული</a>
+            <a href="?culture=en-US&ui-culture=en-US" class="text-blue-600 hover:underline">English</a>
+        </div>
+
+        <!-- ✅ This is where the child view will be injected -->
+        <div class="mt-10">
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- Footer or scripts can go here -->
+    @RenderSection("scripts", required: false)
+</body>
+</html>
