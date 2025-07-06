@@ -30,7 +30,7 @@
 
             _unitOfWorkMock.Setup(u => u.ShippingRepository).Returns(_shippingRepoMock.Object);
 
-            _service = new ShippingService(_unitOfWorkMock.Object, _mapper);
+          
         }
 
         [Fact]

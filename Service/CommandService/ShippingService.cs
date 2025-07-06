@@ -3,6 +3,7 @@ using Dto;
 using Interface.Command;
 using Interface.IRepositories;
 using Interface.Model;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,56 +16,83 @@ namespace Service.CommandService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly ILogger<ShippingService> _logger;
 
-        public ShippingService(IUnitOfWork unitOfWork, IMapper mapper)
+        public ShippingService(
+            IUnitOfWork unitOfWork,
+            IMapper mapper,
+            ILogger<ShippingService> logger)
         {
-            _unitOfWork = unitOfWork;
-            _mapper = mapper;
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        // 1. Get Shipping by ID
+        /// <summary>
+        /// Retrieves a shipping option by its ID.
+        /// </summary>
         public ShippingModel GetShippingById(int id)
         {
-            var shipping = _unitOfWork.ShippingRepository.FindByCondition(s => s.Id == id).SingleOrDefault();
-            return _mapper.Map<ShippingModel>(shipping);
+            var entity = _unitOfWork.ShippingRepository
+                .FindByCondition(s => s.Id == id)
+                .SingleOrDefault();
+            return entity == null ? null : _mapper.Map<ShippingModel>(entity);
         }
 
-        // 2. Get All Shippings
+        /// <summary>
+        /// Retrieves all shipping options.
+        /// </summary>
         public IEnumerable<ShippingModel> GetAllShippings()
         {
-            var shippings = _unitOfWork.ShippingRepository.GetAll().ToList();
-            return _mapper.Map<IEnumerable<ShippingModel>>(shippings);
+            var entities = _unitOfWork.ShippingRepository.GetAll();
+            return _mapper.Map<IEnumerable<ShippingModel>>(entities);
         }
 
-        // 3. Create Shipping
-        public int CreateShipping(ShippingModel shippingModel)
+        /// <summary>
+        /// Creates a new shipping option and returns its ID.
+        /// </summary>
+        public int CreateShipping(ShippingModel model)
         {
-            var shippingEntity = _mapper.Map<Shipping>(shippingModel);
-            _unitOfWork.ShippingRepository.Insert(shippingEntity);
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            var entity = _mapper.Map<Shipping>(model);
+            _unitOfWork.ShippingRepository.Insert(entity);
             _unitOfWork.SaveChanges();
-            return shippingEntity.Id;
+            _logger.LogInformation("Created new shipping (ID: {Id})", entity.Id);
+            return entity.Id;
         }
 
-        // 4. Update Shipping
-        public bool UpdateShipping(ShippingModel shippingModel)
+        /// <summary>
+        /// Updates an existing shipping option.
+        /// </summary>
+        public bool UpdateShipping(ShippingModel model)
         {
-            var existingShipping = _unitOfWork.ShippingRepository.FindByCondition(s => s.Id == shippingModel.Id).SingleOrDefault();
-            if (existingShipping == null) return false;
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            var entity = _unitOfWork.ShippingRepository
+                .FindByCondition(s => s.Id == model.Id)
+                .SingleOrDefault();
+            if (entity == null) return false;
 
-            var updateshipping = _mapper.Map<Shipping>(shippingModel);
-            updateshipping.Id = existingShipping.Id;
+            // Map updated fields onto the existing entity
+            _mapper.Map(model, entity);
+            _unitOfWork.ShippingRepository.Update(entity);
             _unitOfWork.SaveChanges();
+            _logger.LogInformation("Updated shipping (ID: {Id})", entity.Id);
             return true;
         }
 
-        // 5. Delete Shipping
+        /// <summary>
+        /// Deletes a shipping option by its ID.
+        /// </summary>
         public bool DeleteShipping(int id)
         {
-            var shipping = _unitOfWork.ShippingRepository.FindByCondition(s => s.Id == id).SingleOrDefault();
-            if (shipping == null) return false;
+            var entity = _unitOfWork.ShippingRepository
+                .FindByCondition(s => s.Id == id)
+                .SingleOrDefault();
+            if (entity == null) return false;
 
-            _unitOfWork.ShippingRepository.Delete(shipping);
+            _unitOfWork.ShippingRepository.Delete(entity);
             _unitOfWork.SaveChanges();
+            _logger.LogInformation("Deleted shipping (ID: {Id})", id);
             return true;
         }
     }

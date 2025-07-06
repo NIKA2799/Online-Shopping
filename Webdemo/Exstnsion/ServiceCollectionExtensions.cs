@@ -15,7 +15,7 @@ namespace Webdemo.Exstnsion
         public static IServiceCollection AddProjectServices(this IServiceCollection services)
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddScoped<ICarteService, CartService>();
+            services.AddScoped<ICartService, CartService>();
             services.AddScoped<IOrderCommandService, OrderCommand>();
             services.AddScoped<ICategoryCommand, CategoryCommand>();
             services.AddScoped<ICategoryQurey, CategoryQurey>();

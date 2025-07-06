@@ -9,7 +9,7 @@ namespace Interface.Command
 {
    public interface ICartService
     {
-        bool Checkout(string userId, CheckoutModel model);
+        bool Checkout(int userId, CheckoutModel model);
         bool ClearCart(int userId);
         bool UpdateItemQuantity(int userId, int cartItemId, int quantity);
         bool RemoveItemFromCart(int userId, int cartItemId);

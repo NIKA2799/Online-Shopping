@@ -3,202 +3,251 @@ using Dto;
 using Interface.Command;
 using Interface.IRepositories;
 using Interface.Model;
+using Microsoft.Extensions.Logging;
 
 
 namespace Service.CommandService
 {
-    public class CartService : ICarteService
-
-
+    public class CartService : ICartService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly ILogger<CartService> _logger;
 
-        public CartService(IUnitOfWork unitOfWork, IMapper mapper)
+        public CartService(
+            IUnitOfWork unitOfWork,
+            IMapper mapper,
+            ILogger<CartService> logger)
         {
-            _unitOfWork = unitOfWork;
-            _mapper = mapper;
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-
-        public Cart GetCartByUserId(int cuctomerid) => _unitOfWork.CartRepository.FindByCondition(c => c.CustomerId == cuctomerid).SingleOrDefault();
-
-        public bool AddItemToCart(int customerid, int productId, int quantity)
+        /// <summary>
+        /// Retrieves the user's cart (with items) by userId, or null if not found.
+        /// </summary>
+        public CartModel GetCartByUserId(int userId)
         {
-            var customer = _unitOfWork.CustomerRepository.FindByCondition(c => c.Id == customerid).SingleOrDefault();
-            if (customer == null) return false;
+            var cart = _unitOfWork.CartRepository
+                .FindByCondition(c => c.CustomerId == userId)
+                .SingleOrDefault();
 
-            var cart = GetCartByUserId(customerid);
+            if (cart == null)
+                return null;
+
+            // Map entity to DTO; sort items for user-friendliness
+            var cartModel = _mapper.Map<CartModel>(cart);
+            cart = new Cart
+            {
+                CustomerId = userId,
+                Customer = new User { Id = userId },
+                
+            };
+            cartModel.Items = _mapper.Map<IEnumerable<CartItemModel>>(
+                cart.Items.OrderBy(ci => ci.Product.Name)
+            );
+            return cartModel;
+        }
+
+        /// <summary>
+        /// Adds an item to the user's cart or increases quantity if the item already exists.
+        /// </summary>
+        public bool AddItemToCart(int userId, int productId, int quantity)
+        {
+            if (quantity <= 0)
+                throw new ArgumentException("Quantity must be greater than zero.", nameof(quantity));
+
+            // Retrieve or create the cart for the user
+            var cart = _unitOfWork.CartRepository
+                .FindByCondition(c => c.CustomerId == userId)
+                .SingleOrDefault();
+
             if (cart == null)
             {
-                cart = new Cart { CustomerId = customerid, Customer = customer };
+                cart = new Cart { CustomerId = userId };
                 _unitOfWork.CartRepository.Insert(cart);
-                _unitOfWork.SaveChanges();
+                _unitOfWork.SaveChanges(); // Assigns cart.Id
             }
 
-            var cartItem = new CartItem
-            {
-                CartId = cart.Id,
-                ProductId = productId,
-                Quantity = quantity
-            };
-            _unitOfWork.CartItemRepository.Insert(cartItem);
-            _unitOfWork.SaveChanges();
+            // Find existing item in the cart
+            var existingItem = _unitOfWork.CartItemRepository
+                .FindByCondition(ci => ci.CartId == cart.Id && ci.ProductId == productId)
+                .SingleOrDefault();
 
+            if (existingItem != null)
+            {
+                existingItem.Quantity += quantity;
+                _unitOfWork.CartItemRepository.Update(existingItem);
+            }
+            else
+            {
+                // Add as new item
+                var newItem = new CartItem
+                {
+                    CartId = cart.Id,
+                    ProductId = productId,
+                    Quantity = quantity
+                };
+                _unitOfWork.CartItemRepository.Insert(newItem);
+            }
+
+            _unitOfWork.SaveChanges();
+            _logger.LogInformation(
+                "User {UserId} added product {ProductId} (x{Quantity}) to cart {CartId}",
+                userId, productId, quantity, cart.Id);
             return true;
         }
 
+        /// <summary>
+        /// Removes an item from user's cart.
+        /// </summary>
         public bool RemoveItemFromCart(int userId, int cartItemId)
         {
-            var cart = GetCartByUserId(userId);
-            if (cart == null) return false;
+            var cart = _unitOfWork.CartRepository
+                .FindByCondition(c => c.CustomerId == userId)
+                .SingleOrDefault();
 
-            var cartItem = _unitOfWork.CartItemRepository.FindByCondition(ci => ci.CartId == cart.Id && ci.Id == cartItemId).SingleOrDefault();
-            if (cartItem == null) return false;
+            if (cart == null)
+                return false;
 
-            _unitOfWork.CartItemRepository.Delete(cartItem);
+            var item = _unitOfWork.CartItemRepository
+                .FindByCondition(ci => ci.CartId == cart.Id && ci.Id == cartItemId)
+                .SingleOrDefault();
+
+            if (item == null)
+                return false;
+
+            _unitOfWork.CartItemRepository.Delete(item);
             _unitOfWork.SaveChanges();
-
+            _logger.LogInformation("Removed cart item {CartItemId} from cart {CartId}", cartItemId, cart.Id);
             return true;
         }
 
+        /// <summary>
+        /// Updates the quantity for a specific cart item.
+        /// </summary>
         public bool UpdateItemQuantity(int userId, int cartItemId, int quantity)
         {
-            var cart = GetCartByUserId(userId);
-            if (cart == null) return false;
+            if (quantity <= 0)
+                throw new ArgumentException("Quantity must be greater than zero.", nameof(quantity));
 
-            var cartItem = _unitOfWork.CartItemRepository.FindByCondition(ci => ci.CartId == cart.Id && ci.Id == cartItemId).SingleOrDefault();
-            if (cartItem == null) return false;
+            var cart = _unitOfWork.CartRepository
+                .FindByCondition(c => c.CustomerId == userId)
+                .SingleOrDefault();
 
-            cartItem.Quantity = quantity;
-            _unitOfWork.CartItemRepository.Update(cartItem);
+            if (cart == null)
+                return false;
+
+            var item = _unitOfWork.CartItemRepository
+                .FindByCondition(ci => ci.CartId == cart.Id && ci.Id == cartItemId)
+                .SingleOrDefault();
+
+            if (item == null)
+                return false;
+
+            item.Quantity = quantity;
+            _unitOfWork.CartItemRepository.Update(item);
             _unitOfWork.SaveChanges();
-
+            _logger.LogInformation("Updated cart item {CartItemId} quantity to {Quantity}", cartItemId, quantity);
             return true;
         }
 
+        /// <summary>
+        /// Removes all items from user's cart.
+        /// </summary>
         public bool ClearCart(int userId)
         {
-            var cart = GetCartByUserId(userId);
+            var cart = _unitOfWork.CartRepository
+                .FindByCondition(c => c.CustomerId == userId)
+                .SingleOrDefault();
             if (cart == null) return false;
 
-            var cartItems = _unitOfWork.CartItemRepository.FindByCondition(ci => ci.CartId == cart.Id).ToList();
-            foreach (var item in cartItems)
-            {
-                _unitOfWork.CartItemRepository.Delete(item);
-            }
-            _unitOfWork.SaveChanges();
+            var items = _unitOfWork.CartItemRepository
+                .FindByCondition(ci => ci.CartId == cart.Id)
+                .ToList();
 
+            foreach (var i in items)
+                _unitOfWork.CartItemRepository.Delete(i);
+
+            _unitOfWork.SaveChanges();
+            _logger.LogInformation("Cleared cart {CartId} for user {UserId}", cart.Id, userId);
             return true;
         }
 
+        /// <summary>
+        /// Finalizes the order: creates an order, moves cart items to order details, and clears the cart.
+        /// </summary>
         public bool Checkout(int userId, CheckoutModel model)
         {
-            var customer = _unitOfWork.CustomerRepository.FindByCondition(c => c.Id == userId).SingleOrDefault();
-            if (customer == null) return false;
+            if (model == null)
+                throw new ArgumentNullException(nameof(model));
 
-            var cart = _unitOfWork.CartRepository.FindByCondition(c => c.CustomerId == customer.Id).SingleOrDefault();
-            if (cart == null) return false;
+            var cart = _unitOfWork.CartRepository
+                .FindByCondition(c => c.CustomerId == userId)
+                .SingleOrDefault();
+            if (cart == null)
+                return false;
 
-            var cartItems = _unitOfWork.CartItemRepository.FindByCondition(ci => ci.CartId == cart.Id).ToList();
-            if (!cartItems.Any()) return false; // No items in cart to checkout
+            var items = _unitOfWork.CartItemRepository
+                .FindByCondition(ci => ci.CartId == cart.Id)
+                .ToList();
+            if (!items.Any())
+                return false;
 
-            // Create a new order
+            // Calculate total amount from cart items
+            var total = items.Sum(ci => ci.Quantity * ci.Product.Price);
+
+            // Create order
             var order = new Order
             {
                 UserId = userId,
                 OrderDate = DateTime.UtcNow,
                 Status = OrderStatus.Pending,
-                TotalAmount = cartItems.Sum(ci => ci.Quantity * ci.Product.Price), // Assuming Product has a Price property
+                TotalAmount = total,
                 ShippingAddress = model.ShippingAddress,
                 BillingAddress = model.BillingAddress,
                 PaymentMethod = model.PaymentMethod
             };
-
             _unitOfWork.OrderRepository.Insert(order);
-            _unitOfWork.SaveChanges();
+            _unitOfWork.SaveChanges(); // Required for order.Id
 
-            // Move cart items to order details
-            foreach (var item in cartItems)
+            // Copy cart items to order details
+            foreach (var ci in items)
             {
-                var orderDetail = new OrderDetail
+                var detail = new OrderDetail
                 {
                     OrderId = order.Id,
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.Product.Price
+                    ProductId = ci.ProductId,
+                    Quantity = ci.Quantity,
+                    UnitPrice = ci.Product.Price
                 };
-
-                _unitOfWork.OrderDetailRepository.Insert(orderDetail);
+                _unitOfWork.OrderDetailRepository.Insert(detail);
             }
 
-            // Clear cart after checkout
-            foreach (var item in cartItems)
-            {
-                _unitOfWork.CartItemRepository.Delete(item);
-            }
-
-            _unitOfWork.SaveChanges();
-
+            // Cart is emptied after checkout
+            ClearCart(userId);
+            _logger.LogInformation(
+                "User {UserId} checked out cart {CartId} into order {OrderId}",
+                userId, cart.Id, order.Id);
             return true;
         }
 
-
-        public void AddToCart(int cartId, CartItemModel cartItem)
+        /// <summary>
+        /// Gets cart total price for a specific user (helper for displaying summary).
+        /// </summary>
+        public decimal GetCartTotal(int userId)
         {
-            var existingCart = _unitOfWork.CartRepository.FindByCondition(c => c.Id == cartId).SingleOrDefault();
-            if (existingCart != null)
-            {
-                var cartItemEntity = _mapper.Map<CartItem>(cartItem);
-                cartItemEntity.CartId = cartId;
-                _unitOfWork.CartItemRepository.Insert(cartItemEntity);
-                _unitOfWork.SaveChanges();
-            }
-        }
-
-        public void UpdateCartItem(int cartId, CartItemModel cartItem)
-        {
-            var existingCartItem = _unitOfWork.CartItemRepository
-                .FindByCondition(ci => ci.CartId == cartId && ci.ProductId == cartItem.ProductId)
+            var cart = _unitOfWork.CartRepository
+                .FindByCondition(c => c.CustomerId == userId)
                 .SingleOrDefault();
+            if (cart == null) return 0;
 
-            if (existingCartItem != null)
-            {
-                existingCartItem.Quantity = cartItem.Quantity;
-                _unitOfWork.CartItemRepository.Update(existingCartItem);
-                _unitOfWork.SaveChanges();
-            }
-        }
+            var items = _unitOfWork.CartItemRepository
+                .FindByCondition(ci => ci.CartId == cart.Id)
+                .ToList();
 
-        public void RemoveFromCart(int cartId, int productId)
-        {
-            var cartItem = _unitOfWork.CartItemRepository
-                .FindByCondition(ci => ci.CartId == cartId && ci.ProductId == productId)
-                .SingleOrDefault();
-
-            if (cartItem != null)
-            {
-                _unitOfWork.CartItemRepository.Delete(cartItem);
-                _unitOfWork.SaveChanges();
-            }
-        }
-
-        public IEnumerable<CartItemModel> GetCartItems(int cartId)
-        {
-            var cartItems = _unitOfWork.CartItemRepository.FindByCondition(ci => ci.CartId == cartId).ToList();
-            return _mapper.Map<List<CartItemModel>>(cartItems);
-        }
-
-        public void DeletCart(int cartId)
-        {
-            var cartItems = _unitOfWork.CartItemRepository.FindByCondition(ci => ci.CartId == cartId).ToList();
-            foreach (var cartItem in cartItems)
-            {
-                _unitOfWork.CartItemRepository.Delete(cartItem);
-            }
-            _unitOfWork.SaveChanges();
+            return items.Sum(i => i.Quantity * i.Product.Price);
         }
     }
 }
-
-

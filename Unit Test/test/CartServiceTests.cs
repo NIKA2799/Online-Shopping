@@ -23,7 +23,7 @@ namespace Unit_Test.test
         {
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _mapperMock = new Mock<IMapper>();
-            _cartService = new CartService(_unitOfWorkMock.Object, _mapperMock.Object);
+           
         }
 
         [Fact]
