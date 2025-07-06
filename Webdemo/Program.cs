@@ -1,3 +1,4 @@
+using Interface.Model;
 using Serilog;
 using Webdemo.Exstnsion;
 using Webdemo.Startup;
@@ -14,6 +15,10 @@ builder.Host.UseSerilog((context, services, configuration) =>
 Startup.ConfigureServices(builder.Services, builder.Configuration);
 var app = builder.Build();
 Startup.ConfigureAsync(app, builder.Environment);
+builder.Configuration
+    .AddUserSecrets<Program>(); // or Startup
+
+var emailSettings = builder.Configuration.GetSection("EmailSettings").Get<EmailSettings>();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
