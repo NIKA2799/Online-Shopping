@@ -6,31 +6,59 @@ using Interface.Model;
 
 namespace Webdemo.Exstnsion
 {
+    using System.Net;
+    using System.Net.Mail;
+    using System.Threading.Tasks;
+    using Microsoft.Extensions.Options;
+    using Microsoft.Extensions.Logging;
+
     public class EmailService : IEmailConfiguration
     {
         private readonly EmailSettings _settings;
+        private readonly ILogger<EmailService> _logger;
 
-        public EmailService(IOptions<EmailSettings> settings)
+        public EmailService(IOptions<EmailSettings> settings, ILogger<EmailService> logger)
         {
             _settings = settings.Value;
+            _logger = logger;
         }
 
+        /// <summary>
+        /// Sends an HTML email using SMTP.
+        /// </summary>
         public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
-            var message = new MailMessage();
-            message.From = new MailAddress(_settings.SenderEmail, _settings.SenderName);
-            message.To.Add(toEmail);
-            message.Subject = subject;
-            message.Body = body;
-            message.IsBodyHtml = true;
-
-            using var client = new SmtpClient(_settings.SmtpServer, _settings.Port)
+            try
             {
-                Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password),
-                EnableSsl = true
-            };
+                var message = new MailMessage
+                {
+                    From = new MailAddress(_settings.SenderEmail, _settings.SenderName),
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                };
 
-            await client.SendMailAsync(message);
+                message.To.Add(toEmail);
+
+                using var client = new SmtpClient(_settings.SmtpServer, _settings.Port)
+                {
+                    Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password),
+                    EnableSsl = true
+                };
+
+                await client.SendMailAsync(message);
+                _logger.LogInformation("Email sent to {ToEmail}", toEmail);
+            }
+            catch (SmtpException smtpEx)
+            {
+                _logger.LogError(smtpEx, "SMTP error while sending email to {ToEmail}", toEmail);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while sending email to {ToEmail}", toEmail);
+                throw;
+            }
         }
     }
 }

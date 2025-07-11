@@ -10,7 +10,7 @@ namespace Webdemo.Exstnsion
             var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-            // Step 1: როლების შექმნა თუ არ არსებობს
+          
             string[] roles = new[] { "admin", "user" };
             foreach (var role in roles)
             {
@@ -18,7 +18,7 @@ namespace Webdemo.Exstnsion
                     await roleManager.CreateAsync(new IdentityRole(role));
             }
 
-            // Step 2: ადმინის შექმნა თუ არ არსებობს
+           
             string adminEmail = "admin@shop.com";
             string adminPassword = "Admin123!";
 
