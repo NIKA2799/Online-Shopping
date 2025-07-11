@@ -125,6 +125,7 @@ public static class Startup
         }
 
         var locOptions = app.ApplicationServices.GetRequiredService<IOptions<RequestLocalizationOptions>>();
+        app.UseErrorHandling();
         app.UseRequestMiddleware();
 
         app.UseHttpsRedirection(); // Redirect HTTP requests to HTTPS  
