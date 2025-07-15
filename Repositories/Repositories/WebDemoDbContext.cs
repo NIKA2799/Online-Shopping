@@ -41,6 +41,7 @@ namespace Repositories.Repositories
             modelBuilder.ApplyConfiguration(new ShippingConfiguration());
             modelBuilder.ApplyConfiguration(new WishlistConfiguration());
             modelBuilder.ApplyConfiguration(new WishlistItemConfiguration());
+            modelBuilder.ApplyConfiguration(new AuditLogConfiguration());
             base.OnModelCreating(modelBuilder);
 
         }

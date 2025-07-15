@@ -25,6 +25,7 @@ namespace Repositories.Repositories
         private readonly Lazy<IProductRepository> _productRepository;
         private readonly Lazy<IReviewRepository> _reviewRepository;
         private readonly Lazy<IShippingRepository> _shippingRepository;
+        private readonly Lazy<IAuditLogRepository> _auditLogRepository;
         private readonly Lazy<IWishlistRepositorty> _wishlistRepositorty;
         private readonly Lazy<IWishlistItemRepository> _wishlistItemRepository;
         private IDbContextTransaction transaction;
@@ -52,12 +53,13 @@ namespace Repositories.Repositories
             _wishlistRepositorty = new Lazy<IWishlistRepositorty>(() => new WishlistRepositorty(_context));
             _wishlistItemRepository = new Lazy<IWishlistItemRepository>(() => new WishlistItemRepository(_context));
             _productCategoryRepository = new Lazy<IProductCategoryRepository>(() => new ProductCategoryRepository(_context));
-
+            _auditLogRepository = new Lazy<IAuditLogRepository>(() => new AuditLogRepository(_context));
         }
 
         
 
         public ICartItemRepository CartItemRepository => _cartItemRepository.Value;
+        public IAuditLogRepository AuditLogRepository => _auditLogRepository.Value;
         public ICartRepository CartRepository => _cartRepository.Value;
         public ICategoryRepository CategoryRepository => _categoryRepository.Value;
         public ICustomerRepository CustomerRepository => _customerRepository.Value;

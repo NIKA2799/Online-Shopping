@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Dto;
+using Interface;
 using Interface.Command;
 using Interface.IRepositories;
 using Interface.Model;
@@ -7,154 +8,192 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Service.CommandService
 {
-    public class OrderCommand : IOrderCommandService
+    public class OrderCommandService : IOrderCommandService
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
-        public OrderCommand(IUnitOfWork unitOfWork, IMapper mapper)
+        private readonly IDiscountService _discountService;
+        private readonly IAuditService _audit;
+
+        public OrderCommandService(
+            IUnitOfWork uow,
+            IMapper mapper,
+            IDiscountService discountService,
+            IAuditService audit)
         {
-            _unitOfWork = unitOfWork;
+            _uow = uow;
             _mapper = mapper;
+            _discountService = discountService;
+            _audit = audit;
         }
-        public void CancelOrder(int orderId)
+
+        public int Insert(OrderModel model)
         {
-            var order = _unitOfWork.OrderRepository.FindByCondition(o => o.Id == orderId).SingleOrDefault();
-            if (order != null && order.Status != OrderStatus.Cancelled)
+            var order = _mapper.Map<Order>(model);
+            order.OrderDate = DateTime.UtcNow;
+            order.Status = OrderStatus.Pending;
+
+            _uow.OrderRepository.Insert(order);
+            _uow.SaveChanges();
+
+            _audit.Log("System", nameof(Order), order.Id.ToString(), "Order created.");
+            return order.Id;
+        }
+
+        public bool Update(int id, OrderModel model)
+        {
+            var existing = _uow.OrderRepository
+                               .FindByCondition(o => o.Id == id)
+                               .SingleOrDefault();
+            if (existing == null) return false;
+
+            _mapper.Map(model, existing);
+            _uow.OrderRepository.Update(existing);
+            _uow.SaveChanges();
+
+            _audit.Log("System", nameof(Order), id.ToString(), "Updated order");
+            return true;
+        }
+
+        public bool Delete(int id)
+        {
+            var order = _uow.OrderRepository
+                            .FindByCondition(o => o.Id == id)
+                            .SingleOrDefault();
+            if (order == null) return false;
+
+            _uow.OrderRepository.Delete(order);
+            _uow.SaveChanges();
+
+            _audit.Log("System", nameof(Order), id.ToString(), "Order deleted.");
+            return true;
+        }
+
+        public bool UpdateOrderStatus(int orderId, OrderStatus newStatus)
+        {
+            var order = _uow.OrderRepository
+                            .FindByCondition(o => o.Id == orderId)
+                            .SingleOrDefault();
+            if (order == null) return false;
+
+            order.Status = newStatus;
+            _uow.OrderRepository.Update(order);
+            _uow.SaveChanges();
+
+            _audit.Log("System", nameof(Order), orderId.ToString(), $"Status changed to {newStatus}.");
+            return true;
+        }
+
+        public bool CancelOrder(int orderId, int customerId)
+        {
+            var order = _uow.OrderRepository
+                            .FindByCondition(o => o.Id == orderId && o.CustomerId == customerId)
+                            .SingleOrDefault();
+            if (order == null || order.Status == OrderStatus.Cancelled)
+                return false;
+
+            _uow.BeginTransaction();
+            try
             {
-                order.Status = OrderStatus.Cancelled;
-                _unitOfWork.OrderRepository.Update(order);
-
-
-                foreach (var detail in _unitOfWork.OrderDetailRepository.FindByCondition(d => d.OrderId == orderId))
+                var details = _uow.OrderDetailRepository
+                                  .FindByCondition(d => d.OrderId == orderId)
+                                  .ToList();
+                foreach (var d in details)
                 {
-                    var product = _unitOfWork.ProductRepository.GetById(detail.ProductId);
-                    if (product != null)
+                    var prod = _uow.ProductRepository.GetById(d.ProductId);
+                    if (prod != null)
                     {
-                        product.Stock += detail.Quantity;
-                        product.IsOutOfStock = product.Stock <= 0;
-                        _unitOfWork.ProductRepository.Update(product);
+                        prod.Stock += d.Quantity;
+                        _uow.ProductRepository.Update(prod);
                     }
                 }
 
-                _unitOfWork.SaveChanges();
+                order.Status = OrderStatus.Cancelled;
+                _uow.OrderRepository.Update(order);
+
+                _uow.SaveChanges();
+                _uow.Commit();
+
+                _audit.Log("System", nameof(Order), orderId.ToString(), $"Cancelled by customer {customerId}.");
+                return true;
             }
-        }
-        public void Delete(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public int Insert(OrderModel entityModel)
-        {
-            var orderEntity = _mapper.Map<Order>(entityModel);
-            orderEntity.OrderDate = DateTime.UtcNow;
-            orderEntity.Status = OrderStatus.Pending;
-
-            _unitOfWork.OrderRepository.Insert(orderEntity);
-            _unitOfWork.SaveChanges();
-
-            return orderEntity.Id;
-        }
-
-        public void Update(int id, OrderModel entityModel)
-        {
-            var order = _unitOfWork.OrderRepository.FindByCondition(o => o.Id == id).SingleOrDefault();
-            if (order != null)
+            catch
             {
-                var updateorder = _mapper.Map<Order>(entityModel);
-                updateorder.Id = order.Id;
-                _unitOfWork.OrderRepository.Update(updateorder);
-                _unitOfWork.SaveChanges();
+                _uow.Rollback();
+                throw;
             }
         }
 
-        public void UpdateOrderStatus(int orderId, OrderStatus status)
+        public int Checkout(CheckoutModel model)
         {
-            var order = _unitOfWork.OrderRepository.FindByCondition(o => o.Id == orderId).SingleOrDefault();
-            if (order != null)
-            {
-                order.Status = status;
-                _unitOfWork.OrderRepository.Update(order);
-                _unitOfWork.SaveChanges();
-            }
-        }
-        public int Checkout(CheckoutModel checkoutModel)
-        {
-            var cart = _unitOfWork.CartRepository
-                         .FindByCondition(c => c.CustomerId == checkoutModel.Customerid)
-                         .Include(c => c.Items)
-                         .ThenInclude(i => i.Product)
-                         .SingleOrDefault();
+            var cart = _uow.CartRepository
+                           .FindByCondition(c => c.CustomerId == model.Customerid)
+                           .Include(c => c.Items)
+                           .ThenInclude(i => i.Product)
+                           .SingleOrDefault()
+                       ?? throw new InvalidOperationException("Cart not found.");
 
-            if (cart?.Items == null || !cart.Items.Any())
-                throw new InvalidOperationException("Cart is empty or does not exist.");
+            if (!cart.Items.Any())
+                throw new InvalidOperationException("Cart is empty.");
 
-            decimal total = 0;
+            decimal total = 0m;
             foreach (var item in cart.Items)
             {
                 if (item.Product.Stock < item.Quantity)
-                    throw new InvalidOperationException($"Insufficient stock for {item.Product.Name}.");
+                    throw new InvalidOperationException(
+                        $"Insufficient stock for '{item.Product.Name}'.");
                 total += item.Quantity * item.Product.Price;
             }
 
-            // ✅ ფასდაკლების გამოყენება (თუ არსებობს კოდი)
-            if (!string.IsNullOrWhiteSpace(checkoutModel.DiscountCode))
+            if (!string.IsNullOrWhiteSpace(model.DiscountCode) &&
+                _discountService.IsValid(model.DiscountCode))
             {
-                var discount = _unitOfWork.DiscountRepository
-                                  .FindByCondition(d => d.Code == checkoutModel.DiscountCode)
-                                  .FirstOrDefault();
-
-                if (discount != null && discount.ExpirationDate > DateTime.UtcNow)
-                {
-                    var discountAmount = total * (discount.DiscountPercentage / 100m);
-                    total -= discountAmount;
-                }
+                total = _discountService.ApplyDiscount(model.DiscountCode, total);
+                _audit.Log("System", nameof(Order), "N/A",
+                    $"Applied discount '{model.DiscountCode}' to order (new total: {total:C}).");
             }
 
             var order = new Order
             {
-                CustomerId = checkoutModel.Customerid,
+                CustomerId = model.Customerid,
                 OrderDate = DateTime.UtcNow,
-                TotalAmount = total,
                 Status = OrderStatus.Pending,
-                ShippingAddress = checkoutModel.ShippingAddress,
-                BillingAddress = checkoutModel.BillingAddress,
-                PaymentMethod = checkoutModel.PaymentMethod
+                TotalAmount = total,
+                ShippingAddress = model.ShippingAddress,
+                BillingAddress = model.BillingAddress,
+                PaymentMethod = model.PaymentMethod
             };
-            _unitOfWork.OrderRepository.Insert(order);
+            _uow.OrderRepository.Insert(order);
 
             foreach (var item in cart.Items)
             {
-                var detail = new OrderDetail
+                _uow.OrderDetailRepository.Insert(new OrderDetail
                 {
-                    Order = order,
+                    OrderId = order.Id,
                     ProductId = item.ProductId,
                     Quantity = item.Quantity,
                     UnitPrice = item.Product.Price
-                };
-
-                _unitOfWork.OrderDetailRepository.Insert(detail);
+                });
 
                 item.Product.Stock -= item.Quantity;
-                _unitOfWork.ProductRepository.Update(item.Product);
+                _uow.ProductRepository.Update(item.Product);
             }
 
-            _unitOfWork.CartItemRepository.DeleteRange(cart.Items);
-            _unitOfWork.SaveChanges();
+            _uow.CartItemRepository.DeleteRange(cart.Items);
+
+            _uow.SaveChanges();
+            _audit.Log("System", nameof(Order), order.Id.ToString(),
+                $"Checked out by customer {model.Customerid}.");
 
             return order.Id;
         }
-        public OrderStatus? TrackOrderStatus(int orderId, int userId)
+
+        public OrderStatus? TrackOrderStatus(int orderId, int customerId)
         {
-            var order = _unitOfWork.OrderRepository
-                .FindByCondition(o => o.Id == orderId && o.UserId == userId)
-                .SingleOrDefault();
-
-            if (order == null)
-                return null;
-
-            return order.Status;
+            var order = _uow.OrderRepository
+                            .FindByCondition(o => o.Id == orderId && o.CustomerId == customerId)
+                            .SingleOrDefault();
+            return order?.Status;
         }
     }
-
 }

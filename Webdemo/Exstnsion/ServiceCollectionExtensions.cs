@@ -16,7 +16,7 @@ namespace Webdemo.Exstnsion
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ICartService, CartService>();
-            services.AddScoped<IOrderCommandService, OrderCommand>();
+            services.AddScoped<IOrderCommandService, OrderCommandService>();
             services.AddScoped<ICategoryCommand, CategoryCommand>();
             services.AddScoped<ICategoryQurey, CategoryQurey>();
             services.AddScoped<IOrderQurey, OrderQuery>();

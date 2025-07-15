@@ -21,7 +21,7 @@ namespace Interface.IRepositories
         IReviewRepository ReviewRepository { get; }
         IShippingRepository ShippingRepository { get; }
         IWishlistRepositorty WishlistRepositorty { get; }
-
+         IAuditLogRepository AuditLogRepository { get; }
         IProductCategoryRepository ProductCategoryRepository { get; }
         IWishlistItemRepository WishlistItemRepository { get; }
 

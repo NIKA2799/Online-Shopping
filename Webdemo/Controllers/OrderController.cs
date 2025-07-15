@@ -34,14 +34,14 @@ namespace Webdemo.Controllers
             }
         }
 
-        [HttpPost("cancel/{id}")]
-        public IActionResult CancelOrder(int id)
-        {
-            _orderCommandService.CancelOrder(id);
-            return Ok(new { Message = "Order cancelled successfully" });
-        }
+        //[HttpPost("cancel/{id}")]
+        //public IActionResult CancelOrder(int id)
+        //{
+        //    _orderCommandService.CancelOrder(id);
+        //    return Ok(new { Message = "Order cancelled successfully" });
+        //}
 
-        [HttpGet("all")]
+        //[HttpGet("all")]
         public IActionResult GetAllOrders()
         {
             var orders = _orderQueryService.FindAll();
