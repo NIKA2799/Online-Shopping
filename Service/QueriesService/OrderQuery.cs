@@ -14,40 +14,50 @@ namespace Service.QueriesService
 {
     public class OrderQuery : IOrderQurey
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
-        public OrderQuery(IUnitOfWork unitOfWork, IMapper mapper)
+
+        public OrderQuery(IUnitOfWork uow, IMapper mapper)
         {
+            _uow = uow;
             _mapper = mapper;
-            _unitOfWork = unitOfWork;
         }
+
         public IEnumerable<OrderModel> FindAll()
         {
-            var model = _unitOfWork.OrderRepository.FindAll().SingleOrDefault();
-            var order = _mapper.Map<List<OrderModel>>(model);
-            return order;
+            // get all entity instances, then map
+            var entities = _uow.OrderRepository
+                               .FindAll()
+                               .ToList();
+
+            return _mapper.Map<IEnumerable<OrderModel>>(entities);
         }
 
         public IEnumerable<OrderModel> FindByCondition(Expression<Func<Order, bool>> predicate)
         {
-            var model = _unitOfWork.OrderRepository.FindByCondition(predicate).SingleOrDefault();
-            var order = _mapper.Map<List<OrderModel>>(model);
-            return order;
+            var entities = _uow.OrderRepository
+                               .FindByCondition(predicate)
+                               .ToList();
+
+            return _mapper.Map<IEnumerable<OrderModel>>(entities);
         }
 
         public OrderModel Get(int id)
         {
-            var model = _unitOfWork.OrderRepository.FindByCondition(o=> o.Id ==id).SingleOrDefault();
-            var order = _mapper.Map<OrderModel>(model);
-            return order;
+            var entity = _uow.OrderRepository
+                             .FindByCondition(o => o.Id == id)
+                             .SingleOrDefault();
 
+            return _mapper.Map<OrderModel>(entity);
         }
 
-        public IEnumerable<OrderModel> GetOrdersByUser(int customerid)
+        public IEnumerable<OrderModel> GetOrdersByUser(int customerId)
         {
-            var model = _unitOfWork.OrderRepository.FindByCondition(o => o.CustomerId == customerid).ToList();
-            var order = _mapper.Map<List<OrderModel>>(model);
-            return order;
+            var entities = _uow.OrderRepository
+                               .FindByCondition(o => o.CustomerId == customerId)
+                               .ToList();
+
+            return _mapper.Map<IEnumerable<OrderModel>>(entities);
         }
     }
 }
