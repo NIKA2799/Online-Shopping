@@ -5,6 +5,7 @@ using Webdemo.Startup;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Configure logging with Serilog (optional)
 builder.Host.UseSerilog((context, services, configuration) =>
 {
