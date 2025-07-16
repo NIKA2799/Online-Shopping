@@ -47,8 +47,9 @@ namespace Service.CommandService
                                .SingleOrDefault();
             if (existing == null) return false;
 
-            _mapper.Map(model, existing);
-            _uow.OrderRepository.Update(existing);
+            var updateorder = _mapper.Map<Order>(model);
+            updateorder.Id = existing.Id;
+            _uow.OrderRepository.Update(updateorder);
             _uow.SaveChanges();
 
             _audit.Log("System", nameof(Order), id.ToString(), "Updated order");
