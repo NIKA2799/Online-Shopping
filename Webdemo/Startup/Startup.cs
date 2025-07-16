@@ -36,6 +36,7 @@ public static class Startup
         services.AddDbContext<WebDemoDbContext>(options =>
           options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
         services.AddAutoMapper(typeof(MappingProfile).Assembly);
+        services.AddValidationServices();
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         {
             // Password settings
