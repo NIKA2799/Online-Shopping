@@ -13,112 +13,150 @@ using System.Threading.Tasks;
 
 namespace Unit_Test.test
 {
-    public class OrderQueryTests
+    public class OrderQueryServiceTests
     {
-        private readonly Mock<IUnitOfWork> _unitOfWorkMock;
+        private readonly Mock<IUnitOfWork> _uowMock;
         private readonly Mock<IMapper> _mapperMock;
-        private readonly OrderQuery _orderQuery;
+        private readonly OrderQuery _svc;
 
-        public OrderQueryTests()
+        public OrderQueryServiceTests()
         {
-            _unitOfWorkMock = new Mock<IUnitOfWork>();
+            _uowMock = new Mock<IUnitOfWork>();
             _mapperMock = new Mock<IMapper>();
-            _orderQuery = new OrderQuery(_unitOfWorkMock.Object, _mapperMock.Object);
+            _svc = new OrderQuery(_uowMock.Object, _mapperMock.Object);
         }
 
         [Fact]
-        public void FindAll_ShouldReturnMappedOrders()
+        public void FindAll_ShouldReturnMappedList()
         {
+            // Arrange
             var orders = new List<Order>
                 {
-                    new Order
-                    {
-                        Id = 1,
-                        ShippingAddress = "123 Test St",
-                        BillingAddress = "123 Test St",
-                        PaymentMethod = "Credit Card"
-                    }
+                    new Order { Id = 1, CustomerId = 10, ShippingAddress = "Address1", BillingAddress = "Address1", PaymentMethod = "CreditCard" },
+                    new Order { Id = 2, CustomerId = 20, ShippingAddress = "Address2", BillingAddress = "Address2", PaymentMethod = "PayPal" }
+                }.AsQueryable();
+
+            var orderModels = new List<OrderModel>
+                {
+                    new OrderModel { Id = 1 },
+                    new OrderModel { Id = 2 }
                 };
-            var mapped = new List<OrderModel> { new OrderModel { Id = 1 } };
 
-            _unitOfWorkMock.Setup(u => u.OrderRepository.FindAll()).Returns(orders.AsQueryable());
-            _mapperMock.Setup(m => m.Map<List<OrderModel>>(orders)).Returns(mapped);
+            var repo = new Mock<IOrderRepository>();
+            repo.Setup(r => r.FindAll()).Returns(orders);
+            _uowMock.Setup(u => u.OrderRepository).Returns(repo.Object);
 
-            var result = _orderQuery.FindAll();
+            _mapperMock
+               .Setup(m => m.Map<IEnumerable<OrderModel>>(It.IsAny<IEnumerable<Order>>()))
+               .Returns(orderModels);
 
-            Assert.Single(result);
-            Assert.Equal(1, result.First().Id);
+            // Act
+            var result = _svc.FindAll().ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Equal(1, result[0].Id);
+            Assert.Equal(2, result[1].Id);
+            repo.Verify(r => r.FindAll(), Times.Once);
+            _mapperMock.Verify(m => m.Map<IEnumerable<OrderModel>>(orders), Times.Once);
         }
 
         [Fact]
-        public void FindByCondition_ShouldReturnFilteredOrders()
+        public void FindByCondition_ShouldFilterAndMap()
         {
+            // Arrange
             var orders = new List<Order>
                 {
-                    new Order
-                    {
-                        Id = 2,
-                        ShippingAddress = "456 Test Ave",
-                        BillingAddress = "456 Test Ave",
-                        PaymentMethod = "PayPal"
-                    }
+                    new Order { Id = 1, CustomerId = 10, ShippingAddress = "Address1", BillingAddress = "Address1", PaymentMethod = "CreditCard" },
+                    new Order { Id = 2, CustomerId = 20, ShippingAddress = "Address2", BillingAddress = "Address2", PaymentMethod = "PayPal" }
+                }.AsQueryable();
+
+            var filteredModels = new List<OrderModel>
+                {
+                    new OrderModel { Id = 2 }
                 };
-            var mapped = new List<OrderModel> { new OrderModel { Id = 2 } };
 
-            _unitOfWorkMock.Setup(u => u.OrderRepository.FindByCondition(It.IsAny<Expression<Func<Order, bool>>>()))
-                .Returns(orders.AsQueryable());
-            _mapperMock.Setup(m => m.Map<List<OrderModel>>(orders)).Returns(mapped);
+            var repo = new Mock<IOrderRepository>();
+            repo.Setup(r => r.FindByCondition(It.IsAny<Expression<Func<Order, bool>>>()))
+                .Returns(orders.Where(o => o.CustomerId == 20).AsQueryable());
+            _uowMock.Setup(u => u.OrderRepository).Returns(repo.Object);
 
-            var result = _orderQuery.FindByCondition(o => o.Id == 2);
+            _mapperMock
+               .Setup(m => m.Map<IEnumerable<OrderModel>>(It.IsAny<IEnumerable<Order>>()))
+               .Returns(filteredModels);
 
+            // Act
+            var result = _svc.FindByCondition(o => o.CustomerId == 20).ToList();
+
+            // Assert
             Assert.Single(result);
-            Assert.Equal(2, result.First().Id);
+            Assert.Equal(2, result[0].Id);
+            repo.Verify(r => r.FindByCondition(It.IsAny<Expression<Func<Order, bool>>>()), Times.Once);
+            _mapperMock.Verify(m => m.Map<IEnumerable<OrderModel>>(It.IsAny<IEnumerable<Order>>()), Times.Once);
         }
 
         [Fact]
-        public void Get_ShouldReturnSingleOrder_WhenExists()
+        public void Get_ShouldReturnSingleMappedModel()
         {
+            // Arrange
             var order = new Order
             {
-                Id = 11,
-                ShippingAddress = "789 Test Blvd",
-                BillingAddress = "789 Test Blvd",
-                PaymentMethod = "Debit Card"
+                Id = 5,
+                ShippingAddress = "123 Test St",
+                BillingAddress = "123 Test St",
+                PaymentMethod = "CreditCard"
             };
-            var mapped = new OrderModel { Id = 3 };
+            var repo = new Mock<IOrderRepository>();
+            repo.Setup(r => r.FindByCondition(It.IsAny<Expression<Func<Order, bool>>>()))
+                .Returns(new[] { order }.AsQueryable());
+            _uowMock.Setup(u => u.OrderRepository).Returns(repo.Object);
 
-            _unitOfWorkMock.Setup(u => u.OrderRepository.FindByCondition(It.IsAny<Expression<Func<Order, bool>>>()))
-                .Returns(new List<Order> { order }.AsQueryable());
-            _mapperMock.Setup(m => m.Map<OrderModel>(order)).Returns(mapped);
+            var model = new OrderModel { Id = 5 };
+            _mapperMock.Setup(m => m.Map<OrderModel>(order)).Returns(model);
 
-            var result = _orderQuery.Get(3);
+            // Act
+            var result = _svc.Get(5);
 
-            Assert.Equal(3, result.Id);
+            // Assert
+            Assert.Equal(5, result.Id);
+            repo.Verify(r => r.FindByCondition(It.IsAny<Expression<Func<Order, bool>>>()), Times.Once);
+            _mapperMock.Verify(m => m.Map<OrderModel>(order), Times.Once);
         }
 
         [Fact]
-        public void GetOrdersByUser_ShouldReturnUserOrders()
+        public void GetOrdersByUser_ShouldReturnAllForThatUser()
         {
+            // Arrange
             var orders = new List<Order>
                 {
-                    new Order
-                    {
-                        CustomerId = 4,
-                        ShippingAddress = "101 Test Lane",
-                        BillingAddress = "101 Test Lane",
-                        PaymentMethod = "Bank Transfer"
-                    }
+                    new Order { Id = 1, CustomerId = 99, ShippingAddress = "Address1", BillingAddress = "Address1", PaymentMethod = "CreditCard" },
+                    new Order { Id = 2, CustomerId = 99, ShippingAddress = "Address2", BillingAddress = "Address2", PaymentMethod = "PayPal" },
+                    new Order { Id = 3, CustomerId = 100, ShippingAddress = "Address3", BillingAddress = "Address3", PaymentMethod = "DebitCard" }
+                }.AsQueryable();
+
+            var userModels = new List<OrderModel>
+                {
+                    new OrderModel { Id = 1 },
+                    new OrderModel { Id = 2 }
                 };
-            var mapped = new List<OrderModel> { new OrderModel { CustomerId = 4 } };
 
-            _unitOfWorkMock.Setup(u => u.OrderRepository.FindByCondition(It.IsAny<Expression<Func<Order, bool>>>()))
-                .Returns(orders.AsQueryable());
-            _mapperMock.Setup(m => m.Map<List<OrderModel>>(orders)).Returns(mapped);
+            var repo = new Mock<IOrderRepository>();
+            repo.Setup(r => r.FindByCondition(It.IsAny<Expression<Func<Order, bool>>>()))
+                .Returns((Expression<Func<Order, bool>> pred) => orders.Where(pred.Compile()).AsQueryable());
+            _uowMock.Setup(u => u.OrderRepository).Returns(repo.Object);
 
-            var result = _orderQuery.GetOrdersByUser(4);
+            _mapperMock
+               .Setup(m => m.Map<IEnumerable<OrderModel>>(It.IsAny<IEnumerable<Order>>()))
+               .Returns(userModels);
 
-            Assert.Single(result);
-            Assert.Equal(4, result.First().CustomerId);
+            // Act
+            var result = _svc.GetOrdersByUser(99).ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.All(result, m => Assert.Contains(m.Id, new[] { 1, 2 }));
+            repo.Verify(r => r.FindByCondition(It.IsAny<Expression<Func<Order, bool>>>()), Times.Once);
+            _mapperMock.Verify(m => m.Map<IEnumerable<OrderModel>>(It.IsAny<IEnumerable<Order>>()), Times.Once);
         }
     }
 }
