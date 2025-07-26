@@ -32,11 +32,12 @@ public static class Startup
              .CreateLogger();
         services.AddLogging();
         services.AddSerilog(logger);
+        services.AddValidationServices();
         // Replace the problematic line with the following:
         services.AddDbContext<WebDemoDbContext>(options =>
           options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
         services.AddAutoMapper(typeof(MappingProfile).Assembly);
-        services.AddValidationServices();
+       
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         {
             // Password settings
