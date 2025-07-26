@@ -13,6 +13,7 @@ namespace Webdemo.Exstnsion
 
             // Register FluentValidation validators from this assembly
             services.AddValidatorsFromAssemblyContaining<CartItemModelValidator>();
+            services.AddValidatorsFromAssemblyContaining<CategoryModelValidator>();
             // Enable automatic server-side validation
             services.AddFluentValidationAutoValidation();
             // Enable client-side adapters for Razor Pages/Views
