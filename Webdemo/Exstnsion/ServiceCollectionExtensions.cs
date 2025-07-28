@@ -12,7 +12,7 @@ namespace Webdemo.Exstnsion
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddProjectServices(this IServiceCollection services)
+        public static IServiceCollection AddApplicationLayerServices(this IServiceCollection services)
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ICartService, CartService>();

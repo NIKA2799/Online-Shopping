@@ -24,108 +24,18 @@ public static class Startup
 {
     public static void ConfigureServices(this IServiceCollection services, IConfiguration configuration)
     {
-        var logger = new LoggerConfiguration()
-            .ReadFrom.Configuration(new ConfigurationBuilder()
-             .AddJsonFile("seri-log.config.json")
-             .Build())
-            .Enrich.FromLogContext()
-             .CreateLogger();
-        services.AddLogging();
-        services.AddSerilog(logger);
-        services.AddValidationServices();
-        // Replace the problematic line with the following:
-        services.AddDbContext<WebDemoDbContext>(options =>
-          options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
-        services.AddAutoMapper(typeof(MappingProfile).Assembly);
-        ServiceConfigurationHelper.ConfigureIdentity(services);
-        ServiceConfigurationHelper.ConfigureCors(services);
-        // Add controllers with views (MVC)
-        services.AddControllersWithViews();
-        services.AddProjectServices();
-        // Add Razor Pages
-        services.AddRazorPages();
-        services.Configure<EmailSettings>(
-        configuration.GetSection("EmailSettings"));
-        // Add session support (optional)
-        services.AddSession();
-        services.AddLocalization(options => options.ResourcesPath = "Resources");
-        var supportedCultures = new[] { new CultureInfo("en-US"), new CultureInfo("ka-GE") };
-        // ✅ Configure RequestLocalization
-        services.Configure<RequestLocalizationOptions>(options =>
-        {
-            options.DefaultRequestCulture = new RequestCulture("ka-GE");
-            options.SupportedCultures = supportedCultures;
-            options.SupportedUICultures = supportedCultures;
-            options.RequestCultureProviders.Insert(0, new QueryStringRequestCultureProvider());
-            options.RequestCultureProviders.Insert(1, new CookieRequestCultureProvider());
-
-        });
-        services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-          .AddJwtBearer(options =>
-          {
-              var jwtKey = configuration["Jwt:Key"];
-              if (string.IsNullOrEmpty(jwtKey))
-              {
-                  throw new ArgumentNullException(nameof(jwtKey), "Jwt:Key configuration value cannot be null or empty.");
-              }
-
-              options.TokenValidationParameters = new TokenValidationParameters
-              {
-                  ValidateIssuer = true,
-                  ValidateAudience = true,
-                  ValidateLifetime = true,
-                  ValidateIssuerSigningKey = true,
-                  ValidIssuer = configuration["Jwt:Issuer"],
-                  ValidAudience = configuration["Jwt:Audience"],
-                  IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-              };
-          });
+        services.AddLoggingAndSerilog();
+        services.AddDatabase(configuration);
+        services.AddIdentityConfiguration();
+        services.AddJwtAuthentication(configuration);
+        services.AddAppSettings(configuration);
+        services.AddApplicationLayerServices();
+        services.AddLocalizationConfiguration();
         services.AddAuthorization();
-
     }
-    // This method gets called by the runtime to configure the HTTP request pipeline.
+
     public static Task ConfigureAsync(this IApplicationBuilder app, IWebHostEnvironment env)
     {
-        if (env.IsDevelopment())
-        {
-            app.UseDeveloperExceptionPage();
-        }
-        else
-        {
-            app.UseExceptionHandler("/Home/Error");
-            app.UseHsts(); // Enforce HTTP Strict Transport Security  
-        }
-
-        var locOptions = app.ApplicationServices.GetRequiredService<IOptions<RequestLocalizationOptions>>();
-        app.UseErrorHandling();
-        app.UseRequestMiddleware();
-        app.UseCors("AllowAll");
-        app.UseHttpsRedirection(); // Redirect HTTP requests to HTTPS  
-        app.UseStaticFiles();      // Serve static files (CSS, JS, images)  
-        app.UseCustomMiddleware();
-        app.UseRouting();          // Enable routing middleware  
-
-        app.UseAuthentication();   // Enable authentication middleware  
-        app.UseAuthorization();    // Enable authorization middleware  
-
-        app.UseSession();          // Enable session state  
-
-        app.UseEndpoints(endpoints =>
-        {
-            // Default route for MVC  
-            endpoints.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
-
-            // Razor Pages route  
-            endpoints.MapRazorPages();
-        });
-
-        // Return a completed task to avoid CS1998 diagnostic  
-        return Task.CompletedTask;
+        return app.ConfigureAppMiddlewareAsync(env);
     }
 }
