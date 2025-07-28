@@ -17,9 +17,9 @@ namespace Interface
 
         Task<(bool Success, string? Error, object? Result)> LoginAsync(LoginModel model);
 
-        Task<(bool Success, string? Error)> ForgotPasswordAsync(
-            string email,
-            Func<string, string, object, string> urlAction);
+        Task<(bool Success, string? Error, object? Result)> ForgotPasswordAsync(
+           string email,
+           Func<string, string, object, string> urlAction);
 
         Task<(bool Success, string? Error)> ResetPasswordAsync(string userId, string token, string newPassword);
     }

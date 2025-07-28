@@ -1,115 +1,106 @@
-﻿using Dto;
+﻿using System.Threading.Tasks;
 using Interface;
+using Interface.Command;
 using Interface.Model;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Repositories.Repositories;
-using Webdemo.Exstnsion;
 
 namespace Webdemo.Controllers
 {
     [ApiController]
-    [Route("[controller]/[action]")]
+    [Route("api/[controller]")]
     public class AccountController : ControllerBase
     {
         private readonly IAccountService _accountService;
 
         public AccountController(IAccountService accountService)
-        {
-            _accountService = accountService;
-        }
+            => _accountService = accountService;
 
-        // POST: /Account/Register
-        [HttpPost]
+        /// <summary>
+        /// Registers a new user.  Returns a JSON payload containing the confirmation link.
+        /// </summary>
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // urlAction: ფუნქცია ბმულის ასაგებად
-            string urlAction(string action, string controller, object routeValues)
-            {
-#pragma warning disable CS8603 // Possible null reference return.
-                return Url.Action(action, controller, routeValues, Request.Scheme);
-#pragma warning restore CS8603 // Possible null reference return.
-            }
-
-            var (success, error, result) = await _accountService.RegisterAsync(model, urlAction);
+            var (success, error, result) = await _accountService.RegisterAsync(
+                model,
+                // urlAction: (action, controller, values) => full URL
+                (action, controller, values) =>
+                    Url.Action(action, controller, values, Request.Scheme)!
+            );
 
             if (!success)
-                return BadRequest(new { error });
+                return BadRequest(new { Message = error });
 
+            // returns: { message, confirmationLink }
             return Ok(result);
         }
 
-        // GET: /Account/ConfirmEmail?userId=...&token=...
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        /// <summary>
+        /// GET /api/account/confirm-email?userId=...&token=...
+        /// Confirms the user's email.
+        /// </summary>
+        [HttpGet("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(
+            [FromQuery] string userId,
+            [FromQuery] string token
+        )
         {
             var (success, error) = await _accountService.ConfirmEmailAsync(userId, token);
             if (!success)
-                return BadRequest(new { error });
+                return BadRequest(new { Message = error });
 
-            // Success page ან რიდაირექცია შეგიძლია დაამატო
-            return Ok(new { message = "Email confirmed successfully." });
+            return Ok(new { Message = "Email confirmed successfully." });
         }
 
-        // POST: /Account/Login
-        [HttpPost]
+        /// <summary>
+        /// Logs in and returns a JWT token.
+        /// </summary>
+        [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
             var (success, error, result) = await _accountService.LoginAsync(model);
-
             if (!success)
-                return Unauthorized(new { error });
+                return Unauthorized(new { Message = error });
 
+            // returns: { Token = "...", Expires = ... }
             return Ok(result);
         }
 
-        // POST: /Account/ForgotPassword
-        [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordModel model)
+        /// <summary>
+        /// Generates a password‐reset link and returns it in JSON.
+        /// </summary>
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromQuery] string email)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            string urlAction(string action, string controller, object routeValues)
-            {
-#pragma warning disable CS8603 // Possible null reference return.
-                return Url.Action(action, controller, routeValues, Request.Scheme);
-#pragma warning restore CS8603 // Possible null reference return.
-            }
-
-            var (success, error) = await _accountService.ForgotPasswordAsync(model.Email, urlAction);
+            var (success, error, result) = await _accountService.ForgotPasswordAsync(
+                email,
+                (action, controller, values) =>
+                    Url.Action(action, controller, values, Request.Scheme)!
+            );
 
             if (!success)
-                return BadRequest(new { error });
+                return BadRequest(new { Message = error });
 
-            return Ok(new { message = "Password reset link sent to your email." });
+            // returns: { ResetLink = "https://..." }
+            return Ok(result);
         }
 
-        // POST: /Account/ResetPassword
-        [HttpPost]
-        [AllowAnonymous]
+        /// <summary>
+        /// Resets a password.
+        /// </summary>
+        [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var (success, error) = await _accountService.ResetPasswordAsync(model.UserId, model.Token, model.NewPassword);
+            var (success, error) = await _accountService.ResetPasswordAsync(
+                model.UserId,
+                model.Token,
+                model.NewPassword
+            );
 
             if (!success)
-                return BadRequest(new { error });
+                return BadRequest(new { Message = error });
 
-            return Ok(new { message = "Password reset successful." });
+            return Ok(new { Message = "Password has been reset successfully." });
         }
     }
 }
