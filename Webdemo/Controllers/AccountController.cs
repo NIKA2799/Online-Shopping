@@ -32,7 +32,9 @@ namespace Webdemo.Controllers
             // urlAction: ფუნქცია ბმულის ასაგებად
             string urlAction(string action, string controller, object routeValues)
             {
+#pragma warning disable CS8603 // Possible null reference return.
                 return Url.Action(action, controller, routeValues, Request.Scheme);
+#pragma warning restore CS8603 // Possible null reference return.
             }
 
             var (success, error, result) = await _accountService.RegisterAsync(model, urlAction);
@@ -81,7 +83,9 @@ namespace Webdemo.Controllers
 
             string urlAction(string action, string controller, object routeValues)
             {
+#pragma warning disable CS8603 // Possible null reference return.
                 return Url.Action(action, controller, routeValues, Request.Scheme);
+#pragma warning restore CS8603 // Possible null reference return.
             }
 
             var (success, error) = await _accountService.ForgotPasswordAsync(model.Email, urlAction);

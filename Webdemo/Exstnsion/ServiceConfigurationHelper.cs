@@ -134,10 +134,7 @@ namespace Webdemo.Exstnsion
             });
         }
 
-        public static void AddAppSettings(this IServiceCollection services, IConfiguration configuration)
-        {
-            services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
-        }
+      
     }
 }
    

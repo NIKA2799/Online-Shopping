@@ -29,8 +29,8 @@ namespace Webdemo.Exstnsion
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IEmailConfiguration, EmailService>();
             services.AddScoped<IDiscountService, DiscountService>();
+            services.AddScoped<IAuditService, AuditService>();
             return services;
         }
     }

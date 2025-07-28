@@ -28,7 +28,6 @@ public static class Startup
         services.AddDatabase(configuration);
         services.AddIdentityConfiguration();
         services.AddJwtAuthentication(configuration);
-        services.AddAppSettings(configuration);
         services.AddApplicationLayerServices();
         services.AddProjectServices();
         services.AddLocalizationConfiguration();

@@ -15,14 +15,12 @@ builder.Host.UseSerilog((context, services, configuration) =>
 });
 Startup.ConfigureServices(builder.Services, builder.Configuration);
 var app = builder.Build();
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 Startup.ConfigureAsync(app, builder.Environment);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 builder.Configuration
     .AddUserSecrets<Program>(); // or Startup
 
-var emailSettings = builder.Configuration.GetSection("EmailSettings").Get<EmailSettings>();
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    await SeedAdminHelper.SeedAdminAsync(services);
-}
+
+
 app.Run();
