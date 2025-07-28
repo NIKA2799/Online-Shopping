@@ -30,6 +30,7 @@ public static class Startup
         services.AddJwtAuthentication(configuration);
         services.AddAppSettings(configuration);
         services.AddApplicationLayerServices();
+        services.AddProjectServices();
         services.AddLocalizationConfiguration();
         services.AddAuthorization();
     }
