@@ -37,6 +37,8 @@ public static class Startup
         services.AddDbContext<WebDemoDbContext>(options =>
           options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
         services.AddAutoMapper(typeof(MappingProfile).Assembly);
+        ServiceConfigurationHelper.ConfigureIdentity(services);
+        ServiceConfigurationHelper.ConfigureCors(services);
         // Add controllers with views (MVC)
         services.AddControllersWithViews();
         services.AddProjectServices();
@@ -101,7 +103,7 @@ public static class Startup
         var locOptions = app.ApplicationServices.GetRequiredService<IOptions<RequestLocalizationOptions>>();
         app.UseErrorHandling();
         app.UseRequestMiddleware();
-
+        app.UseCors("AllowAll");
         app.UseHttpsRedirection(); // Redirect HTTP requests to HTTPS  
         app.UseStaticFiles();      // Serve static files (CSS, JS, images)  
         app.UseCustomMiddleware();
