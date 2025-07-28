@@ -37,34 +37,6 @@ public static class Startup
         services.AddDbContext<WebDemoDbContext>(options =>
           options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
         services.AddAutoMapper(typeof(MappingProfile).Assembly);
-       
-        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-        {
-            // Password settings
-            options.Password.RequireNonAlphanumeric = false;  // No special characters required
-            options.Password.RequiredLength = 8;              // Minimum length of 8 characters
-            options.Password.RequireUppercase = false;        // No uppercase letters required
-            options.Password.RequireLowercase = false;        // No lowercase letters required
-
-            // User settings
-            options.User.RequireUniqueEmail = true;           // Ensure email is unique
-
-            // Sign-in settings
-            options.SignIn.RequireConfirmedAccount = false;   // No confirmed account required
-            options.SignIn.RequireConfirmedEmail = false;     // No confirmed email required
-            options.SignIn.RequireConfirmedPhoneNumber = false; // No confirmed phone number required
-        })
-        .AddEntityFrameworkStores<WebDemoDbContext>()    // Use EF Core for Identity
-        .AddDefaultTokenProviders();                         // Add default token providers
-        services.AddCors(options =>
-        {
-            options.AddPolicy("AllowAll",
-                builder =>
-                {
-                    builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-                });
-        });
-
         // Add controllers with views (MVC)
         services.AddControllersWithViews();
         services.AddProjectServices();

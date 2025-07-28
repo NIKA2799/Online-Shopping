@@ -8,7 +8,6 @@ namespace Webdemo.Exstnsion
     {
         public static IServiceCollection AddValidationServices(this IServiceCollection services)
         {
-            // MVC
             services.AddControllersWithViews();
             services.AddValidatorsFromAssemblyContaining<CartItemModelValidator>();
             services.AddValidatorsFromAssemblyContaining<CategoryModelValidator>();
@@ -20,7 +19,6 @@ namespace Webdemo.Exstnsion
             services.AddValidatorsFromAssemblyContaining<EmailSettingsValidator>();
             services.AddFluentValidationAutoValidation();
             services.AddFluentValidationClientsideAdapters();
-
             return services;
         }
     }
