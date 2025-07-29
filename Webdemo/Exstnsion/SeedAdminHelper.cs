@@ -1,88 +1,84 @@
-﻿using Dto;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Dto;
+using Interface; // for ApplicationUser
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
-namespace Webdemo.Exstnsion
+namespace  Webdemo.Exstnsion
 {
-    using Microsoft.AspNetCore.Identity;
-    using Microsoft.Extensions.Configuration;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Logging;
-    using System;
-    using System.Threading.Tasks;
-
     public static class SeedAdminHelper
     {
-        public static async Task SeedAdminAsync(IServiceProvider serviceProvider)
-        {
-            using var scope = serviceProvider.CreateScope();
-            var sp = scope.ServiceProvider;
 
-            // instead of ILogger<SeedAdminHelper>:
+        public static async Task SeedAdminAsync(IServiceProvider sp)
+        {
+            // pull from DI
+            // instead of GetRequiredService<ILogger<SeedAdminHelper>>
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("SeedAdminHelper");
 
-            var config = sp.GetRequiredService<IConfiguration>();
-            var userManager = sp.GetRequiredService<UserManager<ApplicationUser>>();
-            var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
+            var userMgr = sp.GetRequiredService<UserManager<ApplicationUser>>();
+            var roleMgr = sp.GetRequiredService<RoleManager<IdentityRole>>();
+            var adminCfg = sp.GetRequiredService<IOptions<AdminSettings>>().Value;
 
-            // … the rest of your seeding logic
-        
-
-        // 1) Seed roles
-        string[] roles = new[] { "admin", "user" };
+            // 1) Create roles
+            var roles = new[] { "admin", "user" };
             foreach (var role in roles)
             {
-                if (!await roleManager.RoleExistsAsync(role))
+                if (!await roleMgr.RoleExistsAsync(role))
                 {
-                    var roleResult = await roleManager.CreateAsync(new IdentityRole(role));
-                    if (roleResult.Succeeded)
+                    var result = await roleMgr.CreateAsync(new IdentityRole(role));
+                    if (result.Succeeded)
                         logger.LogInformation("Role '{Role}' created.", role);
                     else
-                        logger.LogError("Failed to create role '{Role}': {Errors}", role, string.Join("; ", roleResult.Errors));
+                        logger.LogError("Failed to create role '{Role}': {Errors}",
+                            role, string.Join(";", result.Errors.Select(e=>e.Description)));
                 }
             }
 
-            // 2) Seed admin user from config
-            var adminEmail = config["AdminSettings:Email"];
-            var adminPassword = config["AdminSettings:Password"];
-
-            if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
+            // 2) Validate secrets
+            if (string.IsNullOrWhiteSpace(adminCfg.Email) ||
+                string.IsNullOrWhiteSpace(adminCfg.Password))
             {
-                logger.LogWarning("AdminSettings:Email or Password is not configured. Skipping admin creation.");
+                logger.LogWarning("AdminSettings missing Email or Password; skipping seed.");
                 return;
             }
 
-            var adminUser = await userManager.FindByEmailAsync(adminEmail);
+            // 3) Seed the admin user
+            var adminUser = await userMgr.FindByEmailAsync(adminCfg.Email);
             if (adminUser == null)
             {
-                adminUser = new ApplicationUser
-                {
-                    UserName = adminEmail,
-                    Email = adminEmail,
+                adminUser = new ApplicationUser {
+                    UserName       = adminCfg.Email,
+                    Email          = adminCfg.Email,
                     EmailConfirmed = true
                 };
 
-                var createResult = await userManager.CreateAsync(adminUser, adminPassword);
-                if (!createResult.Succeeded)
+                var create = await userMgr.CreateAsync(adminUser, adminCfg.Password);
+                if (!create.Succeeded)
                 {
-                    logger.LogError("Failed to create admin user '{Email}': {Errors}", adminEmail,
-                        string.Join("; ", createResult.Errors));
+                    logger.LogError("Failed to create admin '{Email}': {Errors}",
+                        adminCfg.Email,
+                        string.Join(";", create.Errors.Select(e=>e.Description)));
                     return;
                 }
 
-                logger.LogInformation("Admin user '{Email}' created.", adminEmail);
+                logger.LogInformation("Admin user '{Email}' created.", adminCfg.Email);
 
-                // 3) Assign admin role
-                var roleAssign = await userManager.AddToRoleAsync(adminUser, "admin");
-                if (roleAssign.Succeeded)
-                    logger.LogInformation("Assigned 'admin' role to '{Email}'.", adminEmail);
+                var addToRole = await userMgr.AddToRoleAsync(adminUser, "admin");
+                if (addToRole.Succeeded)
+                    logger.LogInformation("Assigned 'admin' role to '{Email}'.", adminCfg.Email);
                 else
-                    logger.LogError("Failed to assign 'admin' role to '{Email}': {Errors}", adminEmail,
-                        string.Join("; ", roleAssign.Errors));
+                    logger.LogError("Failed to assign 'admin' role to '{Email}': {Errors}",
+                        adminCfg.Email,
+                        string.Join(";", addToRole.Errors.Select(e=>e.Description)));
             }
             else
             {
-                logger.LogInformation("Admin user '{Email}' already exists. Skipping.", adminEmail);
+                logger.LogInformation("Admin user '{Email}' already exists; skipping.", adminCfg.Email);
             }
         }
     }
