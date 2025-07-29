@@ -6,7 +6,9 @@ using Webdemo.Startup;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+builder.Configuration.AddUserSecrets<Program>();
+builder.Services.Configure<AdminSettings>(
+    builder.Configuration.GetSection("AdminSettings"));
 // Configure logging with Serilog (optional)
 builder.Host.UseSerilog((context, services, configuration) =>
 {
@@ -16,12 +18,9 @@ builder.Host.UseSerilog((context, services, configuration) =>
 });
 Startup.ConfigureServices(builder.Services, builder.Configuration);
 var app = builder.Build();
-builder.Configuration
-    .AddUserSecrets<Program>(); // or Startup
 
 // bind the "AdminSettings" section
-builder.Services.Configure<AdminSettings>(
-    builder.Configuration.GetSection("AdminSettings"));
+
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 Startup.ConfigureAsync(app, builder.Environment);
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
