@@ -17,6 +17,10 @@ namespace Webdemo.Exstnsion
             services.AddValidatorsFromAssemblyContaining<ProductModelValidator>();
             services.AddValidatorsFromAssemblyContaining<OrderTrackingModelValidator>();
             services.AddValidatorsFromAssemblyContaining<EmailSettingsValidator>();
+            services.AddValidatorsFromAssemblyContaining<ResetPasswordModelValidator>();
+            services.AddValidatorsFromAssemblyContaining<RegisterModelValidator>();
+            services.AddValidatorsFromAssemblyContaining<LoginModelValidator>();
+            services.AddValidatorsFromAssemblyContaining<ForgotPasswordModelValidator>();
             services.AddFluentValidationAutoValidation();
             services.AddFluentValidationClientsideAdapters();
             return services;
