@@ -38,6 +38,10 @@ namespace Service.CommandService
 
         public async Task<User> CreateCustomerAsync(RegisterModel model, string applicationUserId)
         {
+            if (model == null)
+                throw new ArgumentNullException(nameof(model));
+
+            // Map and hash the password (your User.Password setter will BCrypt it for you)
             var customer = new User
             {
                 Name = model.Name,
@@ -45,14 +49,18 @@ namespace Service.CommandService
                 PhoneNumber = model.PhoneNumber,
                 ShippingAddress = model.ShippingAddress,
                 BillingAddress = model.BillingAddress,
+                Password = model.Password,       // <-- triggers BCrypt.HashPassword
                 ApplicationUserId = applicationUserId,
                 DateCreated = DateTime.UtcNow
             };
 
+            // Persist
             _unitOfWork.CustomerRepository.Insert(customer);
             await _unitOfWork.SaveChangesAsync();
+
             return customer;
         }
+        
 
 
         public void UpdateCustomer(int id, UserModel model)
