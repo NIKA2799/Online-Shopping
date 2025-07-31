@@ -6,7 +6,7 @@ namespace Webdemo.Models
 {
     public class ProductModel:  IEntityModel
     {
-        public string ImageUrl;
+        public required string ImageUrl;
 
         public required int Id { get; set; }
         public required string Name { get; set; }
@@ -18,6 +18,6 @@ namespace Webdemo.Models
         public bool IsOutOfStock { get; set; }
         public DateTime CreateDate { get; set; }
         public required IFormFile ImageFile { get; set; }
-        public string Items { get; set; }
+        public required string Items { get; set; }
     }
 }
