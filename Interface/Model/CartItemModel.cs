@@ -7,7 +7,7 @@ namespace Interface.Model
         public int CartId { get; set; } // Foreign key to the Cart
         public int ProductId { get; set; } // Foreign key to the Product
         public int Quantity { get; set; }
-        public IEnumerable<CartItemModel> Items { get; set; }
+        public IEnumerable<CartItemModel>? Items { get; set; }
 
     }
 }
