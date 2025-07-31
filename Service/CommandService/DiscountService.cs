@@ -32,9 +32,11 @@ namespace Service.CommandService
                 throw new ArgumentException("Discount code cannot be empty.", nameof(code));
 
 #pragma warning disable CS8603 // Possible null reference return.
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             return _unitOfWork.DiscountRepository
                 .FindByCondition(expression: d => d.Code.Equals(code, StringComparison.OrdinalIgnoreCase))
                 .FirstOrDefault();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 #pragma warning restore CS8603 // Possible null reference return.
         }
 

@@ -11,6 +11,6 @@ namespace Interface.Model
     {
         public int Id { get; set; }
         public int CustomerId { get; set; }
-        public IEnumerable<CartItemModel> Items { get; set; }
+        public IEnumerable<CartItemModel>? Items { get; set; }
     }
 }

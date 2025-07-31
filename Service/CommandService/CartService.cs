@@ -34,7 +34,9 @@ namespace Service.CommandService
                 .SingleOrDefault();
 
             if (cart == null)
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
 
             // Map entity to DTO; sort items for user-friendliness
             var cartModel = _mapper.Map<CartModel>(cart);
