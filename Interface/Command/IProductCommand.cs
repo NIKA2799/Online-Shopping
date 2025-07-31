@@ -7,6 +7,7 @@ namespace Interface.Command
         public void UpdateStock(int productId, int newStock);
         void ToggleFeatured(int productId);
         void ToggleAvailability(int productId);
-        IEnumerable<ProductModel> GetLowStockProducts(int threshold = 5);
+        void AddReview(int productId, ReviewModel reviewModel);
+       IEnumerable<ProductModel> GetLowStockProducts(int threshold = 5);
     }
 }
