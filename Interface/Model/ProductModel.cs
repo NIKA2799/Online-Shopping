@@ -17,7 +17,7 @@ namespace Webdemo.Models
         public required bool IsFeatured { get; set; }
         public bool IsOutOfStock { get; set; }
         public DateTime CreateDate { get; set; }
-        public required IFormFile ImageFile { get; set; }
+        public  IFormFile ImageFile { get; set; }
         public required string Items { get; set; }
     }
 }
