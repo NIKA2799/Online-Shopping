@@ -84,11 +84,13 @@ namespace Service.QueriesService
         }
         public IEnumerable<ProductModel> GetRelatedProducts(int productId, int take = 4)
         {
+#pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
             var product = _unitOfWork.ProductRepository
                 .FindByCondition(p => p.Id == productId)
                 .Include(p => p.ProductCategories)
                 .ThenInclude(pc => pc.Category)
                 .SingleOrDefault();
+#pragma warning restore CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
 
             if (product == null)
                 return Enumerable.Empty<ProductModel>();

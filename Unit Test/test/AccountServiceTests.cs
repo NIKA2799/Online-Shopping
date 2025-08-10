@@ -317,19 +317,23 @@ public class AccountServiceTests
     private static Mock<UserManager<ApplicationUser>> CreateUserManagerMock()
     {
         var store = new Mock<IUserStore<ApplicationUser>>();
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         return new Mock<UserManager<ApplicationUser>>(
             store.Object, null, null, null, null, null, null, null, null
         );
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
     }
 
     private static Mock<SignInManager<ApplicationUser>> CreateSignInManagerMock(UserManager<ApplicationUser> um)
     {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         return new Mock<SignInManager<ApplicationUser>>(
             um,
             Mock.Of<IHttpContextAccessor>(),
             Mock.Of<IUserClaimsPrincipalFactory<ApplicationUser>>(),
             null, null, null, null
         );
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
     }
 
 
