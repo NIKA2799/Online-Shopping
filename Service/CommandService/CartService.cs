@@ -201,6 +201,7 @@ namespace Service.CommandService
             var total = items.Sum(ci => ci.Quantity * ci.Product.Price);
 
             // Create order
+#pragma warning disable CS8601 // Possible null reference assignment.
             var order = new Order
             {
                 UserId = userId,
@@ -211,6 +212,7 @@ namespace Service.CommandService
                 BillingAddress = model.BillingAddress,
                 PaymentMethod = model.PaymentMethod
             };
+#pragma warning restore CS8601 // Possible null reference assignment.
             _unitOfWork.OrderRepository.Insert(order);
             _unitOfWork.SaveChanges(); // Required for order.Id
 
