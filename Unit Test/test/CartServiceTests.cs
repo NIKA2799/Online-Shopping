@@ -294,7 +294,9 @@ public class CartServiceTests
     [Fact]
     public void Checkout_ShouldThrow_WhenModelIsNull()
     {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         Assert.Throws<ArgumentNullException>(() => _sut.Checkout(1, null));
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
     }
 
     [Fact]

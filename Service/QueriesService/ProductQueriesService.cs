@@ -95,10 +95,13 @@ namespace Service.QueriesService
             if (product == null)
                 return Enumerable.Empty<ProductModel>();
 
+#pragma warning disable CS8604 // Possible null reference argument.
             var categoryIds = product.ProductCategories.Select(pc => pc.CategoryId).ToList();
+#pragma warning restore CS8604 // Possible null reference argument.
             var minPrice = product.Price * 0.8m;
             var maxPrice = product.Price * 1.2m;
 
+#pragma warning disable CS8604 // Possible null reference argument.
             var related = _unitOfWork.ProductRepository
                 .FindByCondition(p =>
                     p.Id != productId &&
@@ -109,6 +112,7 @@ namespace Service.QueriesService
                 .OrderBy(x => Guid.NewGuid()) // Random sort
                 .Take(take)
                 .ToList();
+#pragma warning restore CS8604 // Possible null reference argument.
 
             return _mapper.Map<List<ProductModel>>(related);
         }

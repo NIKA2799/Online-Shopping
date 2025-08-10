@@ -37,6 +37,7 @@ public class ProductCommandServiceTests
     public void Insert_Should_Map_Insert_Save_And_Return_Id_When_NoImage()
     {
         // REQUIRED ველებით ProductModel
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         var model = new ProductModel
         {
             Name = "Phone",
@@ -47,6 +48,7 @@ public class ProductCommandServiceTests
             // საჭიროების შემთხვევაში აქვე ჩასვი CategoryId/UserId და სხვ.
             ImageFile = null
         };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
         // mapper -> REQUIRED ველებით Product entity
         var mapped = new Product
