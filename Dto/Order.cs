@@ -12,9 +12,9 @@
 
         public OrderStatus Status { get; set; }
 
-        public required string ShippingAddress { get; set; }
-        public required string BillingAddress { get; set; }
-        public required string PaymentMethod { get; set; }
+        public  string? ShippingAddress { get; set; }
+        public  string? BillingAddress { get; set; }
+        public  string? PaymentMethod { get; set; }
         public int UserId { get; set; }
     }
 }
