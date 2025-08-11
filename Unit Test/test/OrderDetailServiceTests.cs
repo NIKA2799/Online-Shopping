@@ -157,7 +157,11 @@ public class OrderDetailServiceTests
              .Returns(Enumerable.Empty<OrderDetail>().AsQueryable());
 
         // mapper null-ს დაუბრუნებს
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
         _mapper.Setup(m => m.Map<OrderDetailModel>(null)).Returns((OrderDetailModel)null);
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
         var res = _sut.GetById(123);
 
