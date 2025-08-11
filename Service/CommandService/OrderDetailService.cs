@@ -16,12 +16,16 @@ namespace Service.CommandService
         }
         public int Insert(OrderDetailModel orderDetail)
         {
-            var order = _mapper.Map<OrderDetail>(orderDetail);
-            _unitOfWork.OrderDetailRepository.Insert(order);
+            if (orderDetail is null) throw new ArgumentNullException(nameof(orderDetail));
+            if (orderDetail.Id > 0)
+                throw new InvalidOperationException("Insert expects Id = 0. Use Update for existing records.");
+
+            var entity = _mapper.Map<OrderDetail>(orderDetail);
+            _unitOfWork.OrderDetailRepository.Insert(entity);
             _unitOfWork.SaveChanges();
-            order.Id = orderDetail.Id;
-            return order.Id;
+            return entity.Id;
         }
+
         public void Update(OrderDetailModel orderDetailModel, int id)
         {
             var order = _unitOfWork.OrderDetailRepository.FindByCondition(o => o.Id == id).SingleOrDefault();
