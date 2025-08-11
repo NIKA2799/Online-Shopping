@@ -104,7 +104,9 @@ public class CartServiceTests
         Assert.NotNull(result);
         Assert.Equal(10, result.Id);
         // ივენთუალური შემოწმება: პირველი უნდა იყოს Aaa-ს პროდუქტი (Id 2 CartItem-იდან)
+#pragma warning disable CS8604 // Possible null reference argument.
         Assert.Equal(new[] { 2, 3 }, result.Items.Select(i => i.Id)); // expecting Id order: 2 (Aaa), 3 (Zzz)
+#pragma warning restore CS8604 // Possible null reference argument.
     }
 
     // ========== AddItemToCart ==========
