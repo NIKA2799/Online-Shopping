@@ -34,6 +34,7 @@ namespace Interface.Model.ValidatorsModel
                 .WithMessage("Payment method is required.");
 
             // Credit‑card rules only if PaymentMethod == "CreditCard"
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             When(x => x.PaymentMethod.Equals("CreditCard", StringComparison.OrdinalIgnoreCase), () =>
             {
                 RuleFor(x => x.CreditCardNumber)
@@ -48,6 +49,7 @@ namespace Interface.Model.ValidatorsModel
                     .Matches(@"^\d{3,4}$")
                     .WithMessage("CVC must be a 3‐ or 4‐digit number.");
             });
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
             // Order total must be positive
             RuleFor(x => x.OrderTotal)
