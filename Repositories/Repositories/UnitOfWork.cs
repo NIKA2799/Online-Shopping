@@ -1,4 +1,5 @@
 ﻿using Interface.IRepositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -14,6 +15,12 @@ namespace Repositories.Repositories
     public class UnitOfWork : IUnitOfWork, IDisposable
     {
         private readonly WebDemoDbContext _context;
+        private readonly ILogger<UnitOfWork> _logger;
+
+        private IDbContextTransaction? _tx;
+
+        // Lazy repositories
+        private readonly Lazy<ICartRepository> _cartRepository;
         private readonly Lazy<ICartItemRepository> _cartItemRepository;
         private readonly Lazy<ICategoryRepository> _categoryRepository;
         private readonly Lazy<ICustomerRepository> _customerRepository;
@@ -28,39 +35,34 @@ namespace Repositories.Repositories
         private readonly Lazy<IAuditLogRepository> _auditLogRepository;
         private readonly Lazy<IWishlistRepositorty> _wishlistRepositorty;
         private readonly Lazy<IWishlistItemRepository> _wishlistItemRepository;
-        private IDbContextTransaction transaction;
-       
-        private readonly Lazy<ICartRepository> _cartRepository;
         private readonly Lazy<IProductCategoryRepository> _productCategoryRepository;
-        private readonly ILogger<UnitOfWork> _logger;
 
-        public UnitOfWork(WebDemoDbContext context, ILogger<UnitOfWork> logger)
+        public UnitOfWork(WebDemoDbContext context, ILogger<UnitOfWork>? logger = null)
         {
-            _context = context ?? throw new ArgumentException(nameof(context));
-            _logger = logger ?? throw new ArgumentException(nameof(logger));
-            _cartRepository = new Lazy<ICartRepository>(() => new CartRepository(_context));
-            _cartItemRepository = new Lazy<ICartItemRepository>(() => new CartItemRepository(_context));
-            _categoryRepository = new Lazy<ICategoryRepository>(() => new CategoryRepository(_context));
-            _customerRepository = new Lazy<ICustomerRepository>(() => new CustomerRepository(_context));
-            _discountRepository = new Lazy<IDiscountRepository>(() => new DiscountRepository(_context));
-            _inventoryRepository = new Lazy<IInventoryRepository>(() => new InventoryRepository(_context));
-            _orderRepository = new Lazy<IOrderRepository>(() => new OrderRepository(_context));
-            _orderDetailRepository = new Lazy<IOrderDetailRepository>(() => new OrderDetailRepository(_context));
-            _paymentRepository = new Lazy<IPaymentRepository>(() => new PaymentRepository(_context));
-            _productRepository = new Lazy<IProductRepository>(() => new ProductRepository(_context));
-            _reviewRepository = new Lazy<IReviewRepository>(() => new ReviewRepository(_context));
-            _shippingRepository = new Lazy<IShippingRepository>(() => new ShippingRepository(_context));
-            _wishlistRepositorty = new Lazy<IWishlistRepositorty>(() => new WishlistRepositorty(_context));
-            _wishlistItemRepository = new Lazy<IWishlistItemRepository>(() => new WishlistItemRepository(_context));
-            _productCategoryRepository = new Lazy<IProductCategoryRepository>(() => new ProductCategoryRepository(_context));
-            _auditLogRepository = new Lazy<IAuditLogRepository>(() => new AuditLogRepository(_context));
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _logger = logger ?? (ILogger<UnitOfWork>)NullLogger.Instance;
+
+            _cartRepository = new(() => new CartRepository(_context));
+            _cartItemRepository = new(() => new CartItemRepository(_context));
+            _categoryRepository = new(() => new CategoryRepository(_context));
+            _customerRepository = new(() => new CustomerRepository(_context));
+            _discountRepository = new(() => new DiscountRepository(_context));
+            _inventoryRepository = new(() => new InventoryRepository(_context));
+            _orderRepository = new(() => new OrderRepository(_context));
+            _orderDetailRepository = new(() => new OrderDetailRepository(_context));
+            _paymentRepository = new(() => new PaymentRepository(_context));
+            _productRepository = new(() => new ProductRepository(_context));
+            _reviewRepository = new(() => new ReviewRepository(_context));
+            _shippingRepository = new(() => new ShippingRepository(_context));
+            _wishlistRepositorty = new(() => new WishlistRepositorty(_context));
+            _wishlistItemRepository = new(() => new WishlistItemRepository(_context));
+            _productCategoryRepository = new(() => new ProductCategoryRepository(_context));
+            _auditLogRepository = new(() => new AuditLogRepository(_context));
         }
 
-        
-
-        public ICartItemRepository CartItemRepository => _cartItemRepository.Value;
-        public IAuditLogRepository AuditLogRepository => _auditLogRepository.Value;
+        // Repositories
         public ICartRepository CartRepository => _cartRepository.Value;
+        public ICartItemRepository CartItemRepository => _cartItemRepository.Value;
         public ICategoryRepository CategoryRepository => _categoryRepository.Value;
         public ICustomerRepository CustomerRepository => _customerRepository.Value;
         public IDiscountRepository DiscountRepository => _discountRepository.Value;
@@ -74,12 +76,17 @@ namespace Repositories.Repositories
         public IWishlistRepositorty WishlistRepositorty => _wishlistRepositorty.Value;
         public IWishlistItemRepository WishlistItemRepository => _wishlistItemRepository.Value;
         public IProductCategoryRepository ProductCategoryRepository => _productCategoryRepository.Value;
+        public IAuditLogRepository AuditLogRepository => _auditLogRepository.Value;
 
+        public bool HasActiveTransaction => _tx != null;
+
+        // ---- Transactions (sync) ----
         public void BeginTransaction()
         {
+            if (_tx != null) return; // already active
             try
             {
-                transaction = _context.Database.BeginTransaction();
+                _tx = _context.Database.BeginTransaction();
             }
             catch (Exception ex)
             {
@@ -90,48 +97,61 @@ namespace Repositories.Repositories
 
         public void Commit()
         {
+            if (_tx == null) return;
             try
             {
-                transaction?.Commit();
-                transaction?.Dispose();
+                _tx.Commit();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to commit transaction");
                 throw;
             }
+            finally
+            {
+                _tx.Dispose();
+                _tx = null;
+            }
         }
 
         public void Rollback()
         {
-            transaction?.Rollback();
-            transaction?.Dispose();
+            if (_tx == null) return;
+            try
+            {
+                _tx.Rollback();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Rollback threw");
+            }
+            finally
+            {
+                _tx.Dispose();
+                _tx = null;
+            }
         }
 
+        // ---- SaveChanges ----
         public void SaveChanges()
         {
             try
             {
                 _context.SaveChanges();
             }
-            catch (Exception ex)
+            catch (DbUpdateConcurrencyException ex)
             {
-                _logger.LogError(ex, "DbContext error");
+                _logger.LogError(ex, "Concurrency error on SaveChanges");
                 throw;
             }
-
-        }
-
-        public void Dispose()
-        {
-            try
+            catch (DbUpdateException ex)
             {
-                transaction?.Rollback();
-                transaction?.Dispose();
+                _logger.LogError(ex, "DbUpdate error on SaveChanges");
+                throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to rollback transaction");
+                _logger.LogError(ex, "Unexpected error on SaveChanges");
                 throw;
             }
         }
@@ -142,12 +162,56 @@ namespace Repositories.Repositories
             {
                 await _context.SaveChangesAsync();
             }
-            catch (Exception ex)
+            catch (DbUpdateConcurrencyException ex)
             {
-                _logger.LogError(ex, "DbContext error");
+                _logger.LogError(ex, "Concurrency error on SaveChangesAsync");
                 throw;
             }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "DbUpdate error on SaveChangesAsync");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error on SaveChangesAsync");
+                throw;
+            }
+        }
+        public void ConfigureReadOnly() =>
+            _context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
+        public IDisposable WithAutoDetectChanges(bool enable)
+        {
+            var prev = _context.ChangeTracker.AutoDetectChangesEnabled;
+            _context.ChangeTracker.AutoDetectChangesEnabled = enable;
+            return new Restore(() => _context.ChangeTracker.AutoDetectChangesEnabled = prev);
+        }
+
+        private sealed class Restore : IDisposable
+        {
+            private readonly Action _a;
+            public Restore(Action a) => _a = a;
+            public void Dispose() => _a();
+        }
+
+        // ---- Dispose ----
+        public void Dispose()
+        {
+            try
+            {
+                if (_tx != null)
+                {
+                    try { _tx.Rollback(); }
+                    catch (Exception ex) { _logger.LogWarning(ex, "Rollback in Dispose failed"); }
+                    _tx.Dispose();
+                    _tx = null;
+                }
+            }
+            finally
+            {
+                _context.Dispose();
+            }
         }
         public void Configuration()
         {
