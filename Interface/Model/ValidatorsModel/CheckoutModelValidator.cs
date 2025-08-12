@@ -65,7 +65,7 @@ namespace Interface.Model.ValidatorsModel
                     item.SetValidator(new CartItemModelValidator());
                 });
 
-            // OrderDate should be "now" or in the past
+           
             RuleFor(x => x.OrderDate)
                 .LessThanOrEqualTo(DateTime.UtcNow)
                 .WithMessage("Order date cannot be in the future.");
