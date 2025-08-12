@@ -120,6 +120,7 @@ namespace Unit_Test.test
             _productCategoryRepo.Setup(r => r.FindByCondition(It.IsAny<Expression<Func<ProductCategory, bool>>>()))
                                 .Returns(pcs.AsQueryable());
 
+#pragma warning disable CS8601 // Possible null reference assignment.
             _mapper.Setup(m => m.Map<IEnumerable<ProductModel>>(It.IsAny<IEnumerable<Product>>()))
                    .Returns<IEnumerable<Product>>(pp => pp.Select(p => new ProductModel
                    {
@@ -135,6 +136,7 @@ namespace Unit_Test.test
                        
 
                    }));
+#pragma warning restore CS8601 // Possible null reference assignment.
 
             var sut = new CategoryQurey(_uow.Object, _mapper.Object);
 

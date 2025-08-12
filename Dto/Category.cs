@@ -12,6 +12,6 @@ namespace Dto
         public required string Name { get; set; }
         public required string Description { get; set; }
         public DateTime CreateDate { get; set; }
-        public ICollection<ProductCategory> ProductCategories { get; set; }
+        public ICollection<ProductCategory>? ProductCategories { get; set; }
     }
 }
