@@ -34,5 +34,7 @@ namespace Interface.IRepositories
         Task SaveChangesAsync();
         void Configuration();
         void Dispose();
+        IDisposable WithAutoDetectChanges(bool enable);
+        void ConfigureReadOnly();
     }
 }
